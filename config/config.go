@@ -2,10 +2,10 @@ package config
 
 type (
 	ServerConfig struct {
-		HttpServer
+		HTTP
 	}
 
-	HttpServer struct {
+	HTTP struct {
 		Host string
 		Port uint
 	}
@@ -13,7 +13,7 @@ type (
 
 func New() *ServerConfig {
 	cfg := &ServerConfig{
-		HttpServer: HttpServer{
+		HTTP: HTTP{
 			Host: "",
 			Port: 8080,
 		},
