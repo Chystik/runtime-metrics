@@ -28,7 +28,7 @@ func Server(cfg *config.ServerConfig) {
 	serverHandlers := adapters.NewServerHandlers(metricsService)
 
 	// server
-	server := restapi.NewServer(cfg.Http, serverHandlers)
+	server := restapi.NewServer(cfg.HttpServer, serverHandlers)
 	go func() {
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			panic(err)

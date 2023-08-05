@@ -8,7 +8,7 @@ import (
 	"github.com/Chystik/runtime-metrics/internal/adapters"
 )
 
-func NewServer(cfg config.Http, handlers adapters.ServerHandlers) *http.Server {
+func NewServer(cfg config.HttpServer, handlers adapters.ServerHandlers) *http.Server {
 	router := http.NewServeMux()
 
 	registerHandlers(router, handlers)
