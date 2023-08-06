@@ -3,15 +3,15 @@ package memstorage
 import (
 	"fmt"
 
-	"github.com/Chystik/runtime-metrics/internal/infrastructure/repository"
 	"github.com/Chystik/runtime-metrics/internal/models"
+	metricsservice "github.com/Chystik/runtime-metrics/internal/service/server"
 )
 
 type memStorage struct {
 	data map[string]models.MetricValue
 }
 
-func New() repository.MetricsRepository {
+func New() metricsservice.MetricsRepository {
 	return &memStorage{
 		data: make(map[string]models.MetricValue),
 	}
@@ -28,6 +28,7 @@ func (ms *memStorage) UpdateGauge(metric models.Metric) {
 	}
 
 	ms.data[metric.Name] = val
+	//fmt.Printf("%s \t %#v\n", metric.Name, ms.data[metric.Name])
 }
 
 func (ms *memStorage) UpdateCounter(metric models.Metric) {
@@ -41,6 +42,7 @@ func (ms *memStorage) UpdateCounter(metric models.Metric) {
 	}
 
 	ms.data[metric.Name] = val
+	//fmt.Printf("%s \t %#v\n", metric.Name, ms.data[metric.Name])
 }
 
 func (ms *memStorage) Get(name string) (models.Metric, error) {

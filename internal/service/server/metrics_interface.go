@@ -1,4 +1,4 @@
-package repository
+package metricsservice
 
 import "github.com/Chystik/runtime-metrics/internal/models"
 

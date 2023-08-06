@@ -11,7 +11,7 @@ type (
 	}
 )
 
-func New() *ServerConfig {
+func NewServerCfg() *ServerConfig {
 	cfg := &ServerConfig{
 		HTTP: HTTP{
 			Host: "",
