@@ -18,8 +18,8 @@ func Agent(cfg *config.AgentConfig) {
 	agentClient := adapters.NewAgentClient(client, cfg.HTTPServer)
 	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
 
-	updateTicker := time.NewTicker(cfg.PollInterval)
-	reportTicker := time.NewTicker(cfg.ReportInterval)
+	updateTicker := time.NewTicker(time.Duration(cfg.PollInterval))
+	reportTicker := time.NewTicker(time.Duration(cfg.ReportInterval))
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)

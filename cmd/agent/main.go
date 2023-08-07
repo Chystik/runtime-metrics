@@ -7,5 +7,6 @@ import (
 
 func main() {
 	cfg := config.NewAgentCfg()
+	parseFlags(cfg)
 	run.Agent(cfg)
 }

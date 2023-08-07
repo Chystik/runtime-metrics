@@ -7,5 +7,6 @@ import (
 
 func main() {
 	cfg := config.NewServerCfg()
+	parseFlags(cfg)
 	run.Server(cfg)
 }
