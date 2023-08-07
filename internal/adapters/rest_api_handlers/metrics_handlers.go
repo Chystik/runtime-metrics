@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"sort"
 	"strconv"
@@ -123,14 +122,13 @@ func (mh *metricsHandlers) GetMetric(w http.ResponseWriter, r *http.Request) {
 	}
 
 	metricName = path[1]
+	metric, err = mh.metricsService.GetMetric(metricName)
 
 	switch path[0] {
 	case "gauge":
-		metric, err = mh.metricsService.GetMetric(metricName)
-		result = fmt.Sprintf("%f", metric.Gauge)
+		result = strconv.FormatFloat(float64(metric.Gauge), 'f', -1, 64)
 	case "counter":
-		metric, err = mh.metricsService.GetMetric(metricName)
-		result = fmt.Sprintf("%f", float64(metric.Counter))
+		result = strconv.FormatInt(int64(metric.Counter), 10)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		return
