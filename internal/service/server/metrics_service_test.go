@@ -11,11 +11,13 @@ import (
 )
 
 func Test_New(t *testing.T) {
+	t.Parallel()
 	service, _ := getMetricsServiceMocks()
 
 	assert.NotNil(t, service)
 }
 func Test_metricsService_UpdateGauge(t *testing.T) {
+	t.Parallel()
 	service, mks := getMetricsServiceMocks()
 
 	type args struct {
@@ -48,6 +50,7 @@ func Test_metricsService_UpdateGauge(t *testing.T) {
 }
 
 func TestUpdateCounter_WhenRepoReturnsError(t *testing.T) {
+	t.Parallel()
 	service, mks := getMetricsServiceMocks()
 
 	expError := errors.New("some error")
@@ -65,6 +68,7 @@ func TestUpdateCounter_WhenRepoReturnsError(t *testing.T) {
 }
 
 func TestUpdateCounter_WhenRepoReturnsResult(t *testing.T) {
+	t.Parallel()
 	service, mks := getMetricsServiceMocks()
 
 	metric := models.Metric{

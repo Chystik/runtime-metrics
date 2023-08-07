@@ -10,12 +10,14 @@ import (
 )
 
 func Test_New(t *testing.T) {
+	t.Parallel()
 	repo := New()
 
 	assert.NotNil(t, repo)
 }
 
 func Test_memStorage_UpdateGauge(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		metric models.Metric
 	}
@@ -78,6 +80,7 @@ func Test_memStorage_UpdateGauge(t *testing.T) {
 }
 
 func Test_memStorage_UpdateCounter(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		metric models.Metric
 	}
@@ -141,6 +144,7 @@ func Test_memStorage_UpdateCounter(t *testing.T) {
 }
 
 func Test_memStorage_Get(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		name string
 	}
