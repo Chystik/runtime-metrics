@@ -149,19 +149,32 @@ func (mh *metricsHandlers) GetMetric(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (sh *metricsHandlers) AllMetrics(w http.ResponseWriter, r *http.Request) {
+func (mh *metricsHandlers) AllMetrics(w http.ResponseWriter, r *http.Request) {
+	type formatMetrics struct {
+		Name, Gauge, Counter string
+	}
+
+	var fm []formatMetrics
+
 	tpl, err := template.New("table").Parse(tplStr)
 	if err != nil {
 		panic(err)
 	}
 
-	allMetrics := sh.metricsService.GetAllMetrics()
-	sort.Slice(allMetrics, func(i, j int) bool {
-		return allMetrics[i].Name < allMetrics[j].Name
+	m := mh.metricsService.GetAllMetrics()
+
+	for i := range m {
+		g := strconv.FormatFloat(float64(m[i].Gauge), 'f', -1, 64)
+		c := strconv.FormatInt(int64(m[i].Counter), 10)
+		fm = append(fm, formatMetrics{Name: m[i].Name, Gauge: g, Counter: c})
+	}
+
+	sort.Slice(fm, func(i, j int) bool {
+		return fm[i].Name < fm[j].Name
 	})
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err = tpl.Execute(w, allMetrics)
+	err = tpl.Execute(w, fm)
 	if err != nil {
 		panic(err)
 	}
