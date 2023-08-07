@@ -12,6 +12,46 @@ type MetricsService struct {
 	mock.Mock
 }
 
+// GetAllMetrics provides a mock function with given fields:
+func (_m *MetricsService) GetAllMetrics() []models.Metric {
+	ret := _m.Called()
+
+	var r0 []models.Metric
+	if rf, ok := ret.Get(0).(func() []models.Metric); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.Metric)
+		}
+	}
+
+	return r0
+}
+
+// GetMetric provides a mock function with given fields: name
+func (_m *MetricsService) GetMetric(name string) (models.Metric, error) {
+	ret := _m.Called(name)
+
+	var r0 models.Metric
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (models.Metric, error)); ok {
+		return rf(name)
+	}
+	if rf, ok := ret.Get(0).(func(string) models.Metric); ok {
+		r0 = rf(name)
+	} else {
+		r0 = ret.Get(0).(models.Metric)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateCounter provides a mock function with given fields: _a0
 func (_m *MetricsService) UpdateCounter(_a0 models.Metric) {
 	_m.Called(_a0)

@@ -6,4 +6,5 @@ type MetricsRepository interface {
 	UpdateGauge(models.Metric)
 	UpdateCounter(models.Metric)
 	Get(name string) (models.Metric, error)
+	GetAll() []models.Metric
 }

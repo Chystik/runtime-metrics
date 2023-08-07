@@ -42,7 +42,8 @@ func (ms *memStorage) UpdateCounter(metric models.Metric) {
 	}
 
 	ms.data[metric.Name] = val
-	//fmt.Printf("%s \t %#v\n", metric.Name, ms.data[metric.Name])
+	/* fmt.Printf("%s \t %#v\n", metric.Name, ms.data[metric.Name])
+	fmt.Println(ms.data["PollCount"].Counter, "================================") */
 }
 
 func (ms *memStorage) Get(name string) (models.Metric, error) {
@@ -57,4 +58,22 @@ func (ms *memStorage) Get(name string) (models.Metric, error) {
 	metric.MetricValue = val
 
 	return metric, nil
+}
+
+func (ms *memStorage) GetAll() []models.Metric {
+	var metrics []models.Metric
+
+	for k, v := range ms.data {
+		var m models.Metric
+
+		m.Name = k
+		m.MetricValue = models.MetricValue{
+			Gauge:   v.Gauge,
+			Counter: v.Counter,
+		}
+
+		metrics = append(metrics, m)
+	}
+
+	return metrics
 }

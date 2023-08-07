@@ -36,6 +36,22 @@ func (_m *MetricsRepository) Get(name string) (models.Metric, error) {
 	return r0, r1
 }
 
+// GetAll provides a mock function with given fields:
+func (_m *MetricsRepository) GetAll() []models.Metric {
+	ret := _m.Called()
+
+	var r0 []models.Metric
+	if rf, ok := ret.Get(0).(func() []models.Metric); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.Metric)
+		}
+	}
+
+	return r0
+}
+
 // UpdateCounter provides a mock function with given fields: _a0
 func (_m *MetricsRepository) UpdateCounter(_a0 models.Metric) {
 	_m.Called(_a0)

@@ -6,10 +6,14 @@ import (
 
 	"github.com/Chystik/runtime-metrics/config"
 	"github.com/Chystik/runtime-metrics/internal/adapters"
+
+	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
 )
 
 func NewServer(cfg config.HTTP, handlers adapters.ServerHandlers) *http.Server {
-	router := http.NewServeMux()
+	router := chi.NewRouter()
+	router.Use(middleware.Recoverer)
 
 	registerHandlers(router, handlers)
 
