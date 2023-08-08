@@ -123,6 +123,10 @@ func (mh *metricsHandlers) GetMetric(w http.ResponseWriter, r *http.Request) {
 
 	metricName = path[1]
 	metric, err = mh.metricsService.GetMetric(metricName)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
 	switch path[0] {
 	case "gauge":
@@ -131,11 +135,6 @@ func (mh *metricsHandlers) GetMetric(w http.ResponseWriter, r *http.Request) {
 		result = strconv.FormatInt(int64(metric.Counter), 10)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
@@ -172,6 +171,7 @@ func (mh *metricsHandlers) AllMetrics(w http.ResponseWriter, r *http.Request) {
 	})
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
 	err = tpl.Execute(w, fm)
 	if err != nil {
 		panic(err)

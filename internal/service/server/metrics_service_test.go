@@ -98,3 +98,50 @@ func getMetricsServiceMocks() (MetricsService, *metricsServiceMocks) {
 
 	return service, m
 }
+
+func TestGetMetric_WhenRepoReturnResult(t *testing.T) {
+	t.Parallel()
+	var repoMock mocks.MetricsRepository
+	service := New(&repoMock)
+
+	expected := models.Metric{
+		Name: "test",
+		MetricValue: models.MetricValue{
+			Gauge:   1,
+			Counter: 2,
+		}}
+
+	repoMock.On("Get", mock.Anything).Return(expected, nil)
+	actual, actualErr := service.GetMetric(expected.Name)
+
+	assert.NoError(t, actualErr)
+	assert.Equal(t, expected, actual)
+}
+
+func TestGetMetric_WhenRepoReturnError(t *testing.T) {
+	t.Parallel()
+	var repoMock mocks.MetricsRepository
+	service := New(&repoMock)
+
+	expected := models.Metric{}
+	expError := errors.New("some error")
+
+	repoMock.On("Get", mock.Anything).Return(expected, expError)
+	actual, actualErr := service.GetMetric("some name")
+
+	assert.ErrorIs(t, expError, actualErr)
+	assert.Equal(t, expected, actual)
+}
+
+func TestGetAllMetrics(t *testing.T) {
+	t.Parallel()
+	var repoMock mocks.MetricsRepository
+	service := New(&repoMock)
+
+	expected := []models.Metric{}
+
+	repoMock.On("GetAll", mock.Anything).Return(expected)
+	actual := service.GetAllMetrics()
+
+	assert.Equal(t, expected, actual)
+}

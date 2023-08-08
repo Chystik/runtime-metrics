@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/Chystik/runtime-metrics/internal/models"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -195,6 +194,51 @@ func Test_memStorage_Get(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("memStorage.Get() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_memStorage_GetAll(t *testing.T) {
+	tests := []struct {
+		name string
+		ms   *memStorage
+		want []models.Metric
+	}{
+		{
+			name: "get",
+			ms: &memStorage{data: map[string]models.MetricValue{
+				"test11": {
+					Counter: 11,
+					Gauge:   22,
+				},
+				"test22": {
+					Counter: 21,
+					Gauge:   31,
+				},
+			}},
+			want: []models.Metric{
+				{
+					Name: "test11",
+					MetricValue: models.MetricValue{
+						Counter: 11,
+						Gauge:   22,
+					},
+				},
+				{
+					Name: "test22",
+					MetricValue: models.MetricValue{
+						Counter: 21,
+						Gauge:   31,
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.ms.GetAll(); !reflect.DeepEqual(got, tt.want) {
+				reflect.DeepEqual(got, tt.want)
 			}
 		})
 	}

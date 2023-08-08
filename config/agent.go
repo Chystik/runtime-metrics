@@ -3,9 +3,13 @@ package config
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/caarlos0/env"
+	"github.com/joho/godotenv"
 )
 
 type (
@@ -27,7 +31,9 @@ type (
 	CollectableMetrics []string
 )
 
-func NewAgentCfg() *AgentConfig {
+func NewAgentCfg() (*AgentConfig, error) {
+	var err error
+
 	cfg := &AgentConfig{
 		HTTPServer: HTTPServer{
 			Host: "localhost",
@@ -37,7 +43,19 @@ func NewAgentCfg() *AgentConfig {
 		PollInterval:       PollInterval(2 * time.Second),
 		ReportInterval:     ReportInterval(10 * time.Second),
 	}
-	return cfg
+
+	// loads ENV from file if ENVIRONMENT val is set and parses it values
+	err = cfg.loadEnv("ENVIRONMENT")
+	if err != nil {
+		return nil, err
+	}
+
+	err = cfg.parseEnv()
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
 }
 
 func (adr HTTPServer) String() string {
@@ -82,4 +100,33 @@ func (ri *ReportInterval) Set(s string) error {
 	}
 	*ri = ReportInterval(time.Duration(t) * time.Second)
 	return nil
+}
+
+// load loads ENV from .env file, defined in envVal ENV
+func (cfg *AgentConfig) loadEnv(envVal string) error {
+	var envFile string
+	var err error
+
+	if osEnv := os.Getenv(envVal); osEnv != "" {
+		switch osEnv {
+		case "dev":
+			envFile = "agent_dev.env"
+		case "prod":
+			envFile = "agent_prod.env"
+		case "stage":
+			envFile = "agent_stage.env"
+		}
+
+		// load ENV from *.env file
+		err = godotenv.Load(envFile)
+		if err != nil {
+			panic(err)
+		}
+	}
+	return nil
+}
+
+// pasrse parses ENV
+func (cfg *AgentConfig) parseEnv() error {
+	return env.Parse(cfg)
 }
