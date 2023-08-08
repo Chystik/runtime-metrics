@@ -24,6 +24,9 @@ func Agent(cfg *config.AgentConfig) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
+	// waiting for the server to start
+	time.Sleep(2 * time.Second)
+
 	for {
 		select {
 		case <-updateTicker.C:

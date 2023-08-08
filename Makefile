@@ -17,7 +17,7 @@ lint:
 test-local:
 	go build -o ./cmd/agent/agent ./cmd/agent
 	go build -o ./cmd/server/server ./cmd/server
-	./metricstest -test.v -test.run=^TestIteration$(iter)$$ -agent-binary-path=./cmd/agent/agent -binary-path=./cmd/server/server -server-port=8080 -source-path=./
+	./metricstest -test.v -test.run=^TestIteration$(iter)$$ -agent-binary-path=./cmd/agent/agent -binary-path=./cmd/server/server -server-port=8080 -source-path=.
 	rm ./cmd/agent/agent ./cmd/server/server
 
 gen:
