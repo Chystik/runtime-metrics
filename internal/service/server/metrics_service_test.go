@@ -86,19 +86,6 @@ func TestUpdateCounter_WhenRepoReturnsResult(t *testing.T) {
 	service.UpdateCounter(expMetric)
 }
 
-type metricsServiceMocks struct {
-	repo *mocks.MetricsRepository
-}
-
-func getMetricsServiceMocks() (MetricsService, *metricsServiceMocks) {
-	m := &metricsServiceMocks{
-		repo: &mocks.MetricsRepository{},
-	}
-	service := New(m.repo)
-
-	return service, m
-}
-
 func TestGetMetric_WhenRepoReturnResult(t *testing.T) {
 	t.Parallel()
 	var repoMock mocks.MetricsRepository
@@ -144,4 +131,17 @@ func TestGetAllMetrics(t *testing.T) {
 	actual := service.GetAllMetrics()
 
 	assert.Equal(t, expected, actual)
+}
+
+type metricsServiceMocks struct {
+	repo *mocks.MetricsRepository
+}
+
+func getMetricsServiceMocks() (MetricsService, *metricsServiceMocks) {
+	m := &metricsServiceMocks{
+		repo: &mocks.MetricsRepository{},
+	}
+	service := New(m.repo)
+
+	return service, m
 }

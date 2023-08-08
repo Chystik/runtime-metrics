@@ -17,6 +17,13 @@ import (
 	"github.com/Chystik/runtime-metrics/internal/transport/restapi"
 )
 
+const (
+	logHTTPServerStart            = "HTTP server started on: %s\n"
+	logHTTPServerStop             = "Stopped serving new connections"
+	logSignalInterrupt            = "Interrupt signal. Shutdown"
+	logGracefulHTTPServerShutdown = "Graceful shutdown of HTTP Server complete."
+)
+
 func Server(cfg *config.ServerConfig) {
 	// repository
 	metricsRepository := memstorage.New()
@@ -27,20 +34,21 @@ func Server(cfg *config.ServerConfig) {
 	// handlers
 	serverHandlers := adapters.NewServerHandlers(metricsService)
 
-	// server
+	// http server
 	server := restapi.NewServer(cfg, serverHandlers)
 	go func() {
+		fmt.Printf(logHTTPServerStart, cfg.Address)
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			panic(err)
 		}
-		fmt.Println("stopped serving new connections")
+		fmt.Println(logHTTPServerStop)
 	}()
 
 	// Graceful shutdown setup
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	<-quit
-	fmt.Println("Interrupt signal. Shutdown")
+	fmt.Println(logSignalInterrupt)
 	ctxShutdown, shutdown := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdown()
 
@@ -48,5 +56,5 @@ func Server(cfg *config.ServerConfig) {
 	if err := server.Shutdown(ctxShutdown); err != nil {
 		panic(err)
 	}
-	fmt.Println("Graceful shutdown of HTTP Server complete.")
+	fmt.Println(logGracefulHTTPServerShutdown)
 }

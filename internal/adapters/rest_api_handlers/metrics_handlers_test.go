@@ -166,19 +166,6 @@ func Test_metricsHandlers_UpdateMetric(t *testing.T) {
 	}
 }
 
-type metricsHandlersMocks struct {
-	metricsService *mocks.MetricsService
-}
-
-func getMetricsHandlersMocks() (MetricsHandlers, *metricsHandlersMocks) {
-	m := &metricsHandlersMocks{
-		metricsService: &mocks.MetricsService{},
-	}
-	handlers := NewMetricHandlers(m.metricsService)
-
-	return handlers, m
-}
-
 func Test_metricsHandlers_GetMetric(t *testing.T) {
 	t.Parallel()
 	type metric struct {
@@ -304,4 +291,17 @@ func Test_metricsHandlers_AllMetrics(t *testing.T) {
 			assert.Equal(t, res.Header.Get("Content-Type"), tt.expContentType)
 		})
 	}
+}
+
+type metricsHandlersMocks struct {
+	metricsService *mocks.MetricsService
+}
+
+func getMetricsHandlersMocks() (MetricsHandlers, *metricsHandlersMocks) {
+	m := &metricsHandlersMocks{
+		metricsService: &mocks.MetricsService{},
+	}
+	handlers := NewMetricsHandlers(m.metricsService)
+
+	return handlers, m
 }

@@ -63,11 +63,6 @@ func (as *agentService) UpdateMetrics() {
 
 	as.cache["PollCount"] = models.Counter(v.(models.Counter) + 1)
 	as.cache["RandomValue"] = models.Gauge(rand.Intn(1000))
-
-	/* for k, v := range as.cache {
-		fmt.Printf("%s \t %T: %v\n", k, v, v)
-	}
-	fmt.Println(as.cache["PollCount"], "================================") */
 }
 
 func (as *agentService) ReportMetrics() {

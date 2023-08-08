@@ -48,7 +48,6 @@ func (ac *agentHTTPClient) ReportMetrics(metrics map[string]interface{}) error {
 		if err != nil {
 			panic(err)
 		}
-		//io.Copy(os.Stdout, response.Body)
 		response.Body.Close()
 	}
 	return nil

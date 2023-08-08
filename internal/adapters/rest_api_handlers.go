@@ -15,6 +15,6 @@ type serverHandlers struct {
 
 func NewServerHandlers(ms metricsservice.MetricsService) ServerHandlers {
 	return &serverHandlers{
-		handlers.NewMetricHandlers(ms),
+		handlers.NewMetricsHandlers(ms),
 	}
 }

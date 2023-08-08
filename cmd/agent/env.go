@@ -8,10 +8,10 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// parseEnv loads ENV from file if ENVIRONMENT val is set and parses ENV values
 func parseEnv(cfg *config.AgentConfig) error {
 	var envFile string
 	var err error
-	// load ENV from file if ENVIRONMENT val is set and parses it values
 
 	if osEnv := os.Getenv("ENVIRONMENT"); osEnv != "" {
 		switch osEnv {
@@ -23,7 +23,6 @@ func parseEnv(cfg *config.AgentConfig) error {
 			envFile = "agent_stage.env"
 		}
 
-		// load ENV from *.env file
 		err = godotenv.Load(envFile)
 		if err != nil {
 			panic(err)

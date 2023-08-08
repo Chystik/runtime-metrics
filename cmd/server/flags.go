@@ -7,8 +7,7 @@ import (
 )
 
 func parseFlags(cfg *config.ServerConfig) {
-	// если интерфейс не реализован,
-	// здесь будет ошибка компиляции
+	// checking interface implementation
 	_ = flag.Value(cfg)
 
 	flag.Var(cfg, "a", "Net address host:port")

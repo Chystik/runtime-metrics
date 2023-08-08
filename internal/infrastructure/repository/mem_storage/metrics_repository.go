@@ -28,7 +28,6 @@ func (ms *memStorage) UpdateGauge(metric models.Metric) {
 	}
 
 	ms.data[metric.Name] = val
-	//fmt.Printf("%s \t %#v\n", metric.Name, ms.data[metric.Name])
 }
 
 func (ms *memStorage) UpdateCounter(metric models.Metric) {
@@ -42,8 +41,6 @@ func (ms *memStorage) UpdateCounter(metric models.Metric) {
 	}
 
 	ms.data[metric.Name] = val
-	/* fmt.Printf("%s \t %#v\n", metric.Name, ms.data[metric.Name])
-	fmt.Println(ms.data["PollCount"].Counter, "================================") */
 }
 
 func (ms *memStorage) Get(name string) (models.Metric, error) {

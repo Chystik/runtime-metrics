@@ -7,8 +7,7 @@ import (
 )
 
 func parseFlags(cfg *config.AgentConfig) {
-	// если интерфейс не реализован,
-	// здесь будет ошибка компиляции
+	// checking interface implementation
 	_ = flag.Value(cfg)
 	_ = flag.Value(&cfg.PollInterval)
 	_ = flag.Value(&cfg.ReportInterval)
