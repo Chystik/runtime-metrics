@@ -13,6 +13,7 @@ import (
 
 type (
 	ServerConfig struct {
+		Address string `env:"ADDRESS"`
 		HTTP
 	}
 
@@ -24,12 +25,14 @@ type (
 
 func NewServerCfg() (*ServerConfig, error) {
 	var err error
+	httpServer := HTTP{
+		Host: "localhost",
+		Port: 8080,
+	}
 
 	cfg := &ServerConfig{
-		HTTP: HTTP{
-			Host: "localhost",
-			Port: 8080,
-		},
+		Address: fmt.Sprintf("%s:%s", httpServer.Host, strconv.Itoa(httpServer.Port)),
+		HTTP:    httpServer,
 	}
 
 	// loads ENV from file if ENVIRONMENT val is set and parses it values

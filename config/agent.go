@@ -14,10 +14,11 @@ import (
 
 type (
 	AgentConfig struct {
+		Address string `env:"ADDRESS"`
 		HTTPServer
 		CollectableMetrics
-		PollInterval
-		ReportInterval
+		PollInterval   `env:"POLL_INTERVAL"`
+		ReportInterval `env:"REPORT_INTERVAL"`
 	}
 
 	PollInterval   time.Duration
@@ -33,12 +34,14 @@ type (
 
 func NewAgentCfg() (*AgentConfig, error) {
 	var err error
+	httpServer := HTTPServer{
+		Host: "localhost",
+		Port: 8080,
+	}
 
 	cfg := &AgentConfig{
-		HTTPServer: HTTPServer{
-			Host: "localhost",
-			Port: 8080,
-		},
+		Address:            fmt.Sprintf("%s:%s", httpServer.Host, strconv.Itoa(httpServer.Port)),
+		HTTPServer:         httpServer,
 		CollectableMetrics: []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc"},
 		PollInterval:       PollInterval(2 * time.Second),
 		ReportInterval:     ReportInterval(10 * time.Second),
