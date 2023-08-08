@@ -14,7 +14,7 @@ type (
 
 func NewServerCfg() *ServerConfig {
 	cfg := &ServerConfig{
-		Address: "localhost:8080",
+		Address: ":8080",
 	}
 
 	return cfg
