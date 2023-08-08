@@ -1,7 +1,6 @@
 package restapi
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/Chystik/runtime-metrics/config"
@@ -11,14 +10,14 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func NewServer(cfg config.HTTP, handlers adapters.ServerHandlers) *http.Server {
+func NewServer(cfg *config.ServerConfig, handlers adapters.ServerHandlers) *http.Server {
 	router := chi.NewRouter()
 	router.Use(middleware.Recoverer)
 
 	registerHandlers(router, handlers)
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
+		Addr:    cfg.Address,
 		Handler: router,
 	}
 

@@ -14,8 +14,8 @@ import (
 )
 
 func Agent(cfg *config.AgentConfig) {
-	client := httpclient.NewHTTPClient(cfg.HTTPServer)
-	agentClient := adapters.NewAgentClient(client, cfg.HTTPServer)
+	client := httpclient.NewHTTPClient(cfg)
+	agentClient := adapters.NewAgentClient(client, cfg)
 	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
 
 	updateTicker := time.NewTicker(time.Duration(cfg.PollInterval))

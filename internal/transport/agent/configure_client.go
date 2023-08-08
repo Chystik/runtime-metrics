@@ -6,6 +6,6 @@ import (
 	"github.com/Chystik/runtime-metrics/config"
 )
 
-func NewHTTPClient(cfg config.HTTPServer) *http.Client {
+func NewHTTPClient(cfg *config.AgentConfig) *http.Client {
 	return &http.Client{}
 }

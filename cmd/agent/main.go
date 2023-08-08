@@ -6,10 +6,14 @@ import (
 )
 
 func main() {
-	cfg, err := config.NewAgentCfg()
+	cfg := config.NewAgentCfg()
+
+	parseFlags(cfg)
+
+	err := parseEnv(cfg)
 	if err != nil {
 		panic(err)
 	}
-	parseFlags(cfg)
+
 	run.Agent(cfg)
 }

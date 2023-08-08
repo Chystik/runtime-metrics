@@ -13,14 +13,14 @@ type AgentHTTPClient interface {
 }
 
 type agentHTTPClient struct {
-	client *http.Client
-	server config.HTTPServer
+	client  *http.Client
+	address string
 }
 
-func New(c *http.Client, s config.HTTPServer) AgentHTTPClient {
+func New(c *http.Client, s *config.AgentConfig) AgentHTTPClient {
 	return &agentHTTPClient{
-		client: c,
-		server: s,
+		client:  c,
+		address: s.Address,
 	}
 }
 
@@ -37,7 +37,7 @@ func (ac *agentHTTPClient) ReportMetrics(metrics map[string]interface{}) error {
 			return fmt.Errorf("unknown metric type: %#v", t)
 		}
 
-		url := fmt.Sprintf("http://%s:%d/update/%s/%s/%v", ac.server.Host, ac.server.Port, mType, name, value)
+		url := fmt.Sprintf("http://%s/update/%s/%s/%v", ac.address, mType, name, value)
 
 		request, err := http.NewRequest(http.MethodPost, url, nil)
 		if err != nil {

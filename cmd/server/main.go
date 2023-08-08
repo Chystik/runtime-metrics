@@ -6,10 +6,14 @@ import (
 )
 
 func main() {
-	cfg, err := config.NewServerCfg()
+	cfg := config.NewServerCfg()
+
+	parseFlags(cfg)
+
+	err := parseEnv(cfg)
 	if err != nil {
 		panic(err)
 	}
-	parseFlags(cfg)
+
 	run.Server(cfg)
 }

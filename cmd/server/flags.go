@@ -9,8 +9,8 @@ import (
 func parseFlags(cfg *config.ServerConfig) {
 	// если интерфейс не реализован,
 	// здесь будет ошибка компиляции
-	_ = flag.Value(&cfg.HTTP)
+	_ = flag.Value(cfg)
 
-	flag.Var(&cfg.HTTP, "a", "Net address host:port")
+	flag.Var(cfg, "a", "Net address host:port")
 	flag.Parse()
 }

@@ -15,7 +15,7 @@ type agentClient struct {
 	agenthttpclient.AgentHTTPClient
 }
 
-func NewAgentClient(hc *http.Client, cfg config.HTTPServer) AgentClient {
+func NewAgentClient(hc *http.Client, cfg *config.AgentConfig) AgentClient {
 	return &agentClient{
 		agenthttpclient.New(hc, cfg),
 	}
