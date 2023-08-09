@@ -13,6 +13,9 @@ import (
 	memstorage "github.com/Chystik/runtime-metrics/internal/infrastructure/repository/mem_storage"
 	metricsservice "github.com/Chystik/runtime-metrics/internal/service/server"
 	"github.com/Chystik/runtime-metrics/internal/transport/restapi"
+
+	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
 )
 
 const (
@@ -29,11 +32,16 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	// services
 	metricsService := metricsservice.New(metricsRepository)
 
+	// router
+	router := chi.NewRouter()
+	router.Use(middleware.Recoverer)
+
 	// handlers
-	serverHandlers := handlers.NewMetricsHandlers(metricsService)
+	metricHandlers := handlers.NewMetricsHandlers(metricsService)
+	handlers.RegisterHandlers(router, metricHandlers)
 
 	// http server
-	server := restapi.NewServer(cfg, serverHandlers)
+	server := restapi.NewServer(cfg, router)
 	go func() {
 		fmt.Printf(logHTTPServerStart, cfg.Address)
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {

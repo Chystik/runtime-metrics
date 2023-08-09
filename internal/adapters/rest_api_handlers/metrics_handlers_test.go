@@ -31,7 +31,7 @@ func TestUpdateGaugeMetric(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/update/gauge/test1/25", nil)
 	rec := httptest.NewRecorder()
 
-	mks.metricsService.On("UpdateGauge", mock.Anything).Return()
+	mks.metricsService.EXPECT().UpdateGauge(mock.Anything).Return()
 	handlers.UpdateMetric(rec, req)
 
 	res := rec.Result()

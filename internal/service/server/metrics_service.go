@@ -1,6 +1,11 @@
 package metricsservice
 
-import "github.com/Chystik/runtime-metrics/internal/models"
+import (
+	"errors"
+
+	memstorage "github.com/Chystik/runtime-metrics/internal/infrastructure/repository/mem_storage"
+	"github.com/Chystik/runtime-metrics/internal/models"
+)
 
 type MetricsService interface {
 	UpdateGauge(models.Metric)
@@ -23,7 +28,7 @@ func (ss *metricsService) UpdateGauge(metric models.Metric) {
 
 func (ss *metricsService) UpdateCounter(metric models.Metric) {
 	m, err := ss.metricsRepo.Get(metric.Name)
-	if err != nil {
+	if errors.Is(err, memstorage.ErrNotFoundMetric) {
 		m.Name = metric.Name
 		m.Counter = metric.Counter
 	} else {

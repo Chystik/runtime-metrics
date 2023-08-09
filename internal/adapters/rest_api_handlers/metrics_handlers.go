@@ -41,7 +41,8 @@ type metricsHandlers struct {
 }
 
 func NewMetricsHandlers(ms metricsservice.MetricsService) *metricsHandlers {
-	return &metricsHandlers{metricsService: ms}
+	h := &metricsHandlers{metricsService: ms}
+	return h
 }
 
 func (mh *metricsHandlers) UpdateMetric(w http.ResponseWriter, r *http.Request) {

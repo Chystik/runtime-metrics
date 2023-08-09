@@ -1,6 +1,7 @@
 package agenthttpclient
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -39,14 +40,14 @@ func (ac *agentHTTPClient) ReportMetrics(metrics map[string]interface{}) error {
 
 		url := fmt.Sprintf("http://%s/update/%s/%s/%v", ac.address, mType, name, value)
 
-		request, err := http.NewRequest(http.MethodPost, url, nil)
+		request, err := http.NewRequestWithContext(context.TODO(), http.MethodPost, url, nil)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		request.Header.Set("Content-Type", "text/plain")
 		response, err := ac.client.Do(request)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		response.Body.Close()
 	}

@@ -1,10 +1,13 @@
 package memstorage
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/Chystik/runtime-metrics/internal/models"
 )
+
+var ErrNotFoundMetric = errors.New("not found in repository")
 
 type memStorage struct {
 	data map[string]models.MetricValue
@@ -47,7 +50,7 @@ func (ms *memStorage) Get(name string) (models.Metric, error) {
 
 	val, ok := ms.data[name]
 	if !ok {
-		return models.Metric{}, fmt.Errorf("not found metric with name %s", name)
+		return models.Metric{}, fmt.Errorf("metric with name %s %w", name, ErrNotFoundMetric)
 	}
 
 	metric.Name = name
