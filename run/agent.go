@@ -3,8 +3,6 @@ package run
 import (
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
@@ -13,16 +11,13 @@ import (
 	httpclient "github.com/Chystik/runtime-metrics/internal/transport/agent"
 )
 
-func Agent(cfg *config.AgentConfig) {
+func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 	client := httpclient.NewHTTPClient(cfg)
 	agentClient := adapters.NewAgentClient(client, cfg)
 	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
 
 	updateTicker := time.NewTicker(time.Duration(cfg.PollInterval))
 	reportTicker := time.NewTicker(time.Duration(cfg.ReportInterval))
-
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	// waiting for the server to start
 	time.Sleep(2 * time.Second)

@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
@@ -24,7 +22,7 @@ const (
 	logGracefulHTTPServerShutdown = "Graceful shutdown of HTTP Server complete."
 )
 
-func Server(cfg *config.ServerConfig) {
+func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	// repository
 	metricsRepository := memstorage.New()
 
@@ -44,9 +42,6 @@ func Server(cfg *config.ServerConfig) {
 		fmt.Println(logHTTPServerStop)
 	}()
 
-	// Graceful shutdown setup
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	<-quit
 	fmt.Println(logSignalInterrupt)
 	ctxShutdown, shutdown := context.WithTimeout(context.Background(), 5*time.Second)
