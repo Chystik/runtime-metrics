@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
-	"github.com/Chystik/runtime-metrics/internal/adapters"
+	handlers "github.com/Chystik/runtime-metrics/internal/adapters/rest_api_handlers"
 	memstorage "github.com/Chystik/runtime-metrics/internal/infrastructure/repository/mem_storage"
 	metricsservice "github.com/Chystik/runtime-metrics/internal/service/server"
 	"github.com/Chystik/runtime-metrics/internal/transport/restapi"
@@ -30,7 +30,7 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	metricsService := metricsservice.New(metricsRepository)
 
 	// handlers
-	serverHandlers := adapters.NewServerHandlers(metricsService)
+	serverHandlers := handlers.NewMetricsHandlers(metricsService)
 
 	// http server
 	server := restapi.NewServer(cfg, serverHandlers)

@@ -13,7 +13,7 @@ type metricsService struct {
 	metricsRepo MetricsRepository
 }
 
-func New(mr MetricsRepository) MetricsService {
+func New(mr MetricsRepository) *metricsService {
 	return &metricsService{metricsRepo: mr}
 }
 

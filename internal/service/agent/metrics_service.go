@@ -6,7 +6,7 @@ import (
 	"runtime"
 
 	"github.com/Chystik/runtime-metrics/config"
-	"github.com/Chystik/runtime-metrics/internal/adapters"
+	agenthttpclient "github.com/Chystik/runtime-metrics/internal/adapters/agent_http_client"
 	"github.com/Chystik/runtime-metrics/internal/models"
 )
 
@@ -19,10 +19,10 @@ type agentService struct {
 	collectableMetrics config.CollectableMetrics
 	runtimeMetrics     runtime.MemStats
 	cache              map[string]interface{}
-	client             adapters.AgentClient
+	client             agenthttpclient.AgentHTTPClient
 }
 
-func New(c adapters.AgentClient, cm config.CollectableMetrics) AgentService {
+func New(c agenthttpclient.AgentHTTPClient, cm config.CollectableMetrics) *agentService {
 	cache := make(map[string]interface{})
 	cache["PollCount"] = models.Counter(0)
 

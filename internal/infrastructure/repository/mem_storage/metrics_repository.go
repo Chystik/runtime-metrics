@@ -4,14 +4,13 @@ import (
 	"fmt"
 
 	"github.com/Chystik/runtime-metrics/internal/models"
-	metricsservice "github.com/Chystik/runtime-metrics/internal/service/server"
 )
 
 type memStorage struct {
 	data map[string]models.MetricValue
 }
 
-func New() metricsservice.MetricsRepository {
+func New() *memStorage {
 	return &memStorage{
 		data: make(map[string]models.MetricValue),
 	}

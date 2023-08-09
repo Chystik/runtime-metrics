@@ -6,14 +6,14 @@ import (
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
-	"github.com/Chystik/runtime-metrics/internal/adapters"
+	agenthttpclient "github.com/Chystik/runtime-metrics/internal/adapters/agent_http_client"
 	agentservice "github.com/Chystik/runtime-metrics/internal/service/agent"
 	httpclient "github.com/Chystik/runtime-metrics/internal/transport/agent"
 )
 
 func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 	client := httpclient.NewHTTPClient(cfg)
-	agentClient := adapters.NewAgentClient(client, cfg)
+	agentClient := agenthttpclient.New(client, cfg) //adapters.NewAgentClient(client, cfg)
 	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
 
 	updateTicker := time.NewTicker(time.Duration(cfg.PollInterval))

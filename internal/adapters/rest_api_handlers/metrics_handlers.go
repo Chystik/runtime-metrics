@@ -40,7 +40,7 @@ type metricsHandlers struct {
 	metricsService metricsservice.MetricsService
 }
 
-func NewMetricsHandlers(ms metricsservice.MetricsService) MetricsHandlers {
+func NewMetricsHandlers(ms metricsservice.MetricsService) *metricsHandlers {
 	return &metricsHandlers{metricsService: ms}
 }
 

@@ -17,7 +17,7 @@ type agentHTTPClient struct {
 	address string
 }
 
-func New(c *http.Client, s *config.AgentConfig) AgentHTTPClient {
+func New(c *http.Client, s *config.AgentConfig) *agentHTTPClient {
 	return &agentHTTPClient{
 		client:  c,
 		address: s.Address,
