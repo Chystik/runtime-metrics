@@ -9,10 +9,6 @@ import (
 	"github.com/Chystik/runtime-metrics/internal/models"
 )
 
-type AgentHTTPClient interface {
-	ReportMetrics(metrics map[string]interface{}) error
-}
-
 type agentHTTPClient struct {
 	client  *http.Client
 	address string

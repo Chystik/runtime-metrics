@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Chystik/runtime-metrics/config"
-	agenthttpclient "github.com/Chystik/runtime-metrics/internal/adapters/agent_http_client"
+	"github.com/Chystik/runtime-metrics/internal/adapters"
 	"github.com/Chystik/runtime-metrics/internal/adapters/agent_http_client/mocks"
 	"github.com/Chystik/runtime-metrics/internal/models"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +13,7 @@ import (
 )
 
 func Test_New(t *testing.T) {
-	var c agenthttpclient.AgentHTTPClient
+	var c adapters.AgentHTTPClient
 	var m []string
 
 	agentService := New(c, m)
