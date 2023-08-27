@@ -11,6 +11,7 @@ import (
 	"github.com/Chystik/runtime-metrics/config"
 	handlers "github.com/Chystik/runtime-metrics/internal/adapters/rest_api_handlers"
 	memstorage "github.com/Chystik/runtime-metrics/internal/infrastructure/repository/mem_storage"
+	"github.com/Chystik/runtime-metrics/internal/logger"
 	metricsservice "github.com/Chystik/runtime-metrics/internal/service/server"
 	"github.com/Chystik/runtime-metrics/internal/transport/restapi"
 
@@ -19,13 +20,18 @@ import (
 )
 
 const (
-	logHTTPServerStart            = "HTTP server started on: %s\n"
+	logHTTPServerStart            = "HTTP server started on port: %s"
 	logHTTPServerStop             = "Stopped serving new connections"
 	logSignalInterrupt            = "Interrupt signal. Shutdown"
 	logGracefulHTTPServerShutdown = "Graceful shutdown of HTTP Server complete."
 )
 
 func Server(cfg *config.ServerConfig, quit chan os.Signal) {
+	// logger
+	if err := logger.Initialize(cfg.LogLevel); err != nil {
+		logger.Log.Fatal(err.Error())
+	}
+
 	// repository
 	metricsRepository := memstorage.New()
 
@@ -34,6 +40,7 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 
 	// router
 	router := chi.NewRouter()
+	router.Use(logger.WithLogging)
 	router.Use(middleware.Recoverer)
 
 	// handlers
@@ -43,21 +50,21 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	// http server
 	server := restapi.NewServer(cfg, router)
 	go func() {
-		fmt.Printf(logHTTPServerStart, cfg.Address)
+		logger.Log.Info(fmt.Sprintf(logHTTPServerStart, cfg.Address))
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			panic(err)
+			logger.Log.Fatal(err.Error())
 		}
-		fmt.Println(logHTTPServerStop)
+		logger.Log.Info(logHTTPServerStop)
 	}()
 
 	<-quit
-	fmt.Println(logSignalInterrupt)
+	logger.Log.Info(logSignalInterrupt)
 	ctxShutdown, shutdown := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdown()
 
 	// Graceful shutdown HTTP Server
 	if err := server.Shutdown(ctxShutdown); err != nil {
-		panic(err)
+		logger.Log.Fatal(err.Error())
 	}
-	fmt.Println(logGracefulHTTPServerShutdown)
+	logger.Log.Info(logGracefulHTTPServerShutdown)
 }

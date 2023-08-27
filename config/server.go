@@ -8,13 +8,15 @@ import (
 
 type (
 	ServerConfig struct {
-		Address string `env:"ADDRESS"`
+		Address  string `env:"ADDRESS"`
+		LogLevel string `env:"LOG_LEVEL"`
 	}
 )
 
 func NewServerCfg() *ServerConfig {
 	cfg := &ServerConfig{
-		Address: ":8080",
+		Address:  ":8080",
+		LogLevel: "info",
 	}
 
 	return cfg
