@@ -52,7 +52,6 @@ func Initialize(level string) error {
 		return err
 	}
 
-	// singleton
 	Log = zl
 	return nil
 }
