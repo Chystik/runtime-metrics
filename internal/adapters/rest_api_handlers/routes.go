@@ -5,7 +5,12 @@ import (
 )
 
 func RegisterHandlers(router *chi.Mux, h MetricsHandlers) {
-	router.Post("/update/*", h.UpdateMetric)
+	router.Route("/update", func(r chi.Router) {
+		r.Post("/", h.UpdateMetric)
+		r.Post("/*", h.UpdateMetric)
+	})
+	/* router.Post("/update", h.UpdateMetric)
+	router.Post("/update/*", h.UpdateMetric) */
 	router.Get("/value/*", h.GetMetric)
 	router.Get("/", h.AllMetrics)
 }

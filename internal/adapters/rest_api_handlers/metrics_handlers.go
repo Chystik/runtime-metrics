@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"sort"
 	"strconv"
@@ -48,6 +50,7 @@ func NewMetricsHandlers(ms metricsservice.MetricsService) *metricsHandlers {
 func (mh *metricsHandlers) UpdateMetric(w http.ResponseWriter, r *http.Request) {
 	var (
 		pathRaw string
+		cType   string
 		path    []string
 		metric  models.Metric
 		err     error
@@ -58,54 +61,73 @@ func (mh *metricsHandlers) UpdateMetric(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	pathRaw = strings.TrimLeft(r.URL.Path, "/update")
-	path = strings.Split(pathRaw, "/")
-
-	if len(path) != 3 {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-	metric.Name = path[1]
-
-	switch path[0] {
-	case "gauge":
-		var val float64
-
-		val, err = strconv.ParseFloat(path[2], 64)
+	switch cType = r.Header.Get("Content-Type"); cType {
+	case "application/json":
+		err := json.NewDecoder(r.Body).Decode(&metric)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+	case "text/plain":
+		pathRaw = strings.TrimLeft(r.URL.Path, "/update")
+		path = strings.Split(pathRaw, "/")
+
+		if len(path) != 3 {
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
-		metric.Gauge = models.Gauge(val)
+		metric.Name = path[1]
+
+		switch path[0] {
+		case "gauge":
+			var val float64
+
+			val, err = strconv.ParseFloat(path[2], 64)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			metric.Gauge = models.Gauge(val)
+		case "counter":
+			var val int
+
+			val, err = strconv.Atoi(path[2])
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			metric.Counter = models.Counter(val)
+		default:
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		metric.MType = path[0]
+	}
+
+	switch metric.MType {
+	case "gauge":
 		mh.metricsService.UpdateGauge(metric)
 	case "counter":
-		var val int
-
-		val, err = strconv.Atoi(path[2])
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		metric.Counter = models.Counter(val)
 		mh.metricsService.UpdateCounter(metric)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Content-Type", cType)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (mh *metricsHandlers) GetMetric(w http.ResponseWriter, r *http.Request) {
 	var (
 		pathRaw    string
+		cType      string
 		path       []string
 		metricName string
 		metric     models.Metric
-		result     string
+		mValue     string
+		result     []byte
 		err        error
 	)
 
@@ -114,34 +136,58 @@ func (mh *metricsHandlers) GetMetric(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pathRaw = strings.TrimLeft(r.URL.Path, "/value")
-	path = strings.Split(pathRaw, "/")
+	switch cType = r.Header.Get("Content-Type"); cType {
+	case "application/json":
+		err := json.NewDecoder(r.Body).Decode(&metric)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 
-	if len(path) != 2 {
-		w.WriteHeader(http.StatusNotFound)
-		return
+		metricName = metric.Name
+	case "text/plain":
+
+		pathRaw = strings.TrimLeft(r.URL.Path, "/value")
+		path = strings.Split(pathRaw, "/")
+
+		if len(path) != 2 {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		metricName = path[1]
 	}
 
-	metricName = path[1]
 	metric, err = mh.metricsService.GetMetric(metricName)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	switch path[0] {
+	switch metric.MType {
 	case "gauge":
-		result = strconv.FormatFloat(float64(metric.Gauge), 'f', -1, 64)
+		mValue = strconv.FormatFloat(float64(metric.Gauge), 'f', -1, 64)
 	case "counter":
-		result = strconv.FormatInt(int64(metric.Counter), 10)
-	default:
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		mValue = strconv.FormatInt(int64(metric.Counter), 10)
 	}
 
-	w.Header().Set("Content-Type", "text/plain")
+	switch cType {
+	case "application/json":
+		var buf bytes.Buffer
+
+		err = json.NewEncoder(&buf).Encode(metric)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		result = buf.Bytes()
+	case "text/plain":
+		result = []byte(mValue)
+	}
+
+	w.Header().Set("Content-Type", cType)
 	w.WriteHeader(http.StatusOK)
-	_, err = w.Write([]byte(result))
+	_, err = w.Write(result)
 	if err != nil {
 		panic(err)
 	}
