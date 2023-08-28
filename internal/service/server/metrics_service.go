@@ -27,7 +27,7 @@ func (ss *metricsService) UpdateGauge(metric models.Metric) {
 }
 
 func (ss *metricsService) UpdateCounter(metric models.Metric) {
-	m, err := ss.metricsRepo.Get(metric.Id)
+	m, err := ss.metricsRepo.Get(metric.ID)
 	if errors.Is(err, memstorage.ErrNotFoundMetric) {
 		m = metric
 	} else {

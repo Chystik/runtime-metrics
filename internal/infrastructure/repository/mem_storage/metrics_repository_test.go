@@ -35,7 +35,7 @@ func Test_memStorage_UpdateGauge(t *testing.T) {
 			ms:   &memStorage{data: make(map[string]models.Metric)},
 			args: args{
 				metric: models.Metric{
-					Id:    "test1",
+					ID:    "test1",
 					Value: createValue(1),
 				},
 			},
@@ -53,7 +53,7 @@ func Test_memStorage_UpdateGauge(t *testing.T) {
 			}},
 			args: args{
 				metric: models.Metric{
-					Id:    "test2",
+					ID:    "test2",
 					Value: createValue(10),
 				},
 			},
@@ -66,7 +66,7 @@ func Test_memStorage_UpdateGauge(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.ms.UpdateGauge(tt.args.metric)
-			have, ok := tt.ms.data[tt.args.metric.Id]
+			have, ok := tt.ms.data[tt.args.metric.ID]
 
 			assert.True(t, ok)
 			assert.Equal(t, *tt.want.metricValue, *have.Value)
@@ -94,7 +94,7 @@ func Test_memStorage_UpdateCounter(t *testing.T) {
 			ms:   &memStorage{data: make(map[string]models.Metric)},
 			args: args{
 				metric: models.Metric{
-					Id:    "test1",
+					ID:    "test1",
 					Delta: createDelta(1),
 				},
 			},
@@ -112,7 +112,7 @@ func Test_memStorage_UpdateCounter(t *testing.T) {
 			}},
 			args: args{
 				metric: models.Metric{
-					Id:    "test2",
+					ID:    "test2",
 					Delta: createDelta(10),
 				},
 			},
@@ -126,7 +126,7 @@ func Test_memStorage_UpdateCounter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.ms.UpdateCounter(tt.args.metric)
 
-			have, ok := tt.ms.data[tt.args.metric.Id]
+			have, ok := tt.ms.data[tt.args.metric.ID]
 
 			assert.True(t, ok)
 			assert.Equal(t, *tt.want.metricValue, *have.Delta)
@@ -158,7 +158,7 @@ func Test_memStorage_GetDelta(t *testing.T) {
 				name: "test11",
 			},
 			want: models.Metric{
-				Id:    "test11",
+				ID:    "test11",
 				Delta: createDelta(11),
 				//Value: createValue(22),
 			},
@@ -209,13 +209,13 @@ func Test_memStorage_GetAll(t *testing.T) {
 			}},
 			want: []models.Metric{
 				{
-					Id: "test11",
+					ID: "test11",
 
 					Delta: createDelta(11),
 					Value: createValue(22),
 				},
 				{
-					Id: "test22",
+					ID: "test22",
 
 					Delta: createDelta(21),
 					Value: createValue(31),

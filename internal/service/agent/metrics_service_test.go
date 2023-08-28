@@ -23,7 +23,7 @@ func Test_New(t *testing.T) {
 
 func Test_agentService_UpdateMetrics(t *testing.T) {
 	cache := make(map[string]models.Metric)
-	cache["PollCount"] = models.Metric{Id: "PollCount", MType: "counter", Delta: new(int64)}
+	cache["PollCount"] = models.Metric{ID: "PollCount", MType: "counter", Delta: new(int64)}
 
 	tests := []struct {
 		name string

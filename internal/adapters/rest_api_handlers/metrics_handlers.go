@@ -70,7 +70,7 @@ func (mh *metricsHandlers) UpdateMetric(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	metric.Id = path[1]
+	metric.ID = path[1]
 
 	switch path[0] {
 	case "gauge":
@@ -201,7 +201,7 @@ func (mh *metricsHandlers) GetMetricJSON(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	m, err := mh.metricsService.GetMetric(metric.Id)
+	m, err := mh.metricsService.GetMetric(metric.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -245,7 +245,7 @@ func (mh *metricsHandlers) AllMetrics(w http.ResponseWriter, r *http.Request) {
 			v = strconv.FormatInt(*m[i].Delta, 10)
 		}
 
-		fm = append(fm, formatMetrics{Name: m[i].Id, Type: m[i].MType, Value: v})
+		fm = append(fm, formatMetrics{Name: m[i].ID, Type: m[i].MType, Value: v})
 	}
 
 	sort.Slice(fm, func(i, j int) bool {

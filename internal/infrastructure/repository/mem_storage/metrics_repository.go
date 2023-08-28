@@ -20,9 +20,9 @@ func New() *memStorage {
 }
 
 func (ms *memStorage) UpdateGauge(metric models.Metric) {
-	m, ok := ms.data[metric.Id]
+	m, ok := ms.data[metric.ID]
 	if !ok {
-		ms.data[metric.Id] = metric
+		ms.data[metric.ID] = metric
 	} else {
 		m.Value = metric.Value
 	}
@@ -30,18 +30,18 @@ func (ms *memStorage) UpdateGauge(metric models.Metric) {
 }
 
 func (ms *memStorage) UpdateCounter(metric models.Metric) {
-	m, ok := ms.data[metric.Id]
+	m, ok := ms.data[metric.ID]
 	if !ok {
-		ms.data[metric.Id] = metric
+		ms.data[metric.ID] = metric
 	} else {
 		m.Delta = metric.Delta
 	}
 }
 
-func (ms *memStorage) Get(Id string) (models.Metric, error) {
-	m, ok := ms.data[Id]
+func (ms *memStorage) Get(ID string) (models.Metric, error) {
+	m, ok := ms.data[ID]
 	if !ok {
-		return models.Metric{Id: Id, MType: "", Delta: nil, Value: nil}, fmt.Errorf("metric with Id %s %w", Id, ErrNotFoundMetric)
+		return models.Metric{ID: ID, MType: "", Delta: nil, Value: nil}, fmt.Errorf("metric with ID %s %w", ID, ErrNotFoundMetric)
 	}
 
 	return m, nil

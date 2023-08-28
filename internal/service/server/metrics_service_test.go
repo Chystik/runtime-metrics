@@ -33,7 +33,7 @@ func Test_metricsService_UpdateGauge(t *testing.T) {
 			ss:   service,
 			args: args{
 				metric: models.Metric{
-					Id:    "test1",
+					ID:    "test1",
 					Value: createValue(11),
 				},
 			},
@@ -52,7 +52,7 @@ func TestUpdateCounter_WhenRepoReturnsResult(t *testing.T) {
 	service, mks := getMetricsServiceMocks()
 
 	metric := models.Metric{
-		Id:    "test",
+		ID:    "test",
 		Delta: createDelta(1),
 	}
 	expMetric := metric
@@ -70,13 +70,13 @@ func TestGetMetric_WhenRepoReturnResult(t *testing.T) {
 	service := New(&repoMock)
 
 	expected := models.Metric{
-		Id:    "test",
+		ID:    "test",
 		Value: createValue(1),
 		Delta: createDelta(2),
 	}
 
 	repoMock.On("Get", mock.Anything).Return(expected, nil)
-	actual, actualErr := service.GetMetric(expected.Id)
+	actual, actualErr := service.GetMetric(expected.ID)
 
 	assert.NoError(t, actualErr)
 	assert.Equal(t, expected, actual)

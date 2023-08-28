@@ -26,10 +26,10 @@ type agentService struct {
 func New(c adapters.AgentHTTPClient, cm config.CollectableMetrics) *agentService {
 	cache := make(map[string]models.Metric)
 
-	cache["PollCount"] = models.Metric{Id: "PollCount", MType: "counter", Delta: new(int64)}
-	cache["RandomValue"] = models.Metric{Id: "RandomValue", MType: "gauge", Value: new(float64)}
+	cache["PollCount"] = models.Metric{ID: "PollCount", MType: "counter", Delta: new(int64)}
+	cache["RandomValue"] = models.Metric{ID: "RandomValue", MType: "gauge", Value: new(float64)}
 	for i := range cm {
-		cache[cm[i]] = models.Metric{Id: cm[i], Value: new(float64)}
+		cache[cm[i]] = models.Metric{ID: cm[i], Value: new(float64)}
 	}
 
 	return &agentService{
@@ -64,7 +64,7 @@ func (as *agentService) UpdateMetrics() {
 			m.MType = "gauge"
 			*m.Value = float64(val)
 		}
-		m.Id = as.collectableMetrics[i]
+		m.ID = as.collectableMetrics[i]
 		as.cache[as.collectableMetrics[i]] = m
 	}
 
