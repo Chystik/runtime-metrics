@@ -10,7 +10,7 @@ import (
 type MetricsService interface {
 	UpdateGauge(models.Metric)
 	UpdateCounter(models.Metric)
-	GetMetric(Id string) (models.Metric, error)
+	GetMetric(ID string) (models.Metric, error)
 	GetAllMetrics() []models.Metric
 }
 
@@ -36,8 +36,8 @@ func (ss *metricsService) UpdateCounter(metric models.Metric) {
 	ss.metricsRepo.UpdateCounter(m)
 }
 
-func (ss *metricsService) GetMetric(Id string) (models.Metric, error) {
-	return ss.metricsRepo.Get(Id)
+func (ss *metricsService) GetMetric(ID string) (models.Metric, error) {
+	return ss.metricsRepo.Get(ID)
 }
 
 func (ss *metricsService) GetAllMetrics() []models.Metric {

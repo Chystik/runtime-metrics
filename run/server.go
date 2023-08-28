@@ -40,7 +40,7 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 
 	// router
 	router := chi.NewRouter()
-	//router.Use(logger.WithLogging)
+	router.Use(logger.WithLogging)
 	router.Use(middleware.Recoverer)
 
 	// handlers

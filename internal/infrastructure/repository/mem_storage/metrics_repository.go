@@ -25,8 +25,8 @@ func (ms *memStorage) UpdateGauge(metric models.Metric) {
 		ms.data[metric.ID] = metric
 	} else {
 		m.Value = metric.Value
+		ms.data[metric.ID] = m
 	}
-
 }
 
 func (ms *memStorage) UpdateCounter(metric models.Metric) {
@@ -35,6 +35,7 @@ func (ms *memStorage) UpdateCounter(metric models.Metric) {
 		ms.data[metric.ID] = metric
 	} else {
 		m.Delta = metric.Delta
+		ms.data[metric.ID] = m
 	}
 }
 
