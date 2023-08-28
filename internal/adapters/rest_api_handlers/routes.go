@@ -5,13 +5,14 @@ import (
 )
 
 func RegisterHandlers(router *chi.Mux, h MetricsHandlers) {
-	router.Route("/update", func(r chi.Router) {
+	router.Route("/update/", func(r chi.Router) {
 		r.Post("/", h.UpdateMetricJSON)
 		r.Post("/*", h.UpdateMetric)
 	})
-	router.Route("/value", func(r chi.Router) {
+	router.Route("/value/", func(r chi.Router) {
 		r.Post("/", h.GetMetricJSON)
-		r.Post("/*", h.UpdateMetric)
+		r.Post("/*", h.GetMetric)
 	})
+	router.Get("/value/*", h.GetMetric)
 	router.Get("/", h.AllMetrics)
 }
