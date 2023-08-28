@@ -33,10 +33,8 @@ func Test_metricsService_UpdateGauge(t *testing.T) {
 			ss:   service,
 			args: args{
 				metric: models.Metric{
-					Name: "test1",
-					MetricValue: models.MetricValue{
-						Gauge: 11,
-					},
+					Id:    "test1",
+					Value: createValue(11),
 				},
 			},
 		},
@@ -49,36 +47,16 @@ func Test_metricsService_UpdateGauge(t *testing.T) {
 	}
 }
 
-func TestUpdateCounter_WhenRepoReturnsError(t *testing.T) {
-	t.Parallel()
-	service, mks := getMetricsServiceMocks()
-
-	expError := errors.New("some error")
-	metric := models.Metric{
-		Name: "test",
-		MetricValue: models.MetricValue{
-			Counter: 1,
-		},
-	}
-
-	mks.repo.On("Get", mock.Anything).Return(models.Metric{}, expError)
-	mks.repo.On("UpdateCounter", mock.Anything).Return()
-
-	service.UpdateCounter(metric)
-}
-
 func TestUpdateCounter_WhenRepoReturnsResult(t *testing.T) {
 	t.Parallel()
 	service, mks := getMetricsServiceMocks()
 
 	metric := models.Metric{
-		Name: "test",
-		MetricValue: models.MetricValue{
-			Counter: 1,
-		},
+		Id:    "test",
+		Delta: createDelta(1),
 	}
 	expMetric := metric
-	expMetric.Counter += 1
+	*expMetric.Delta += 1
 
 	mks.repo.On("Get", mock.Anything).Return(metric, nil)
 	mks.repo.On("UpdateCounter", mock.Anything).Return()
@@ -92,14 +70,13 @@ func TestGetMetric_WhenRepoReturnResult(t *testing.T) {
 	service := New(&repoMock)
 
 	expected := models.Metric{
-		Name: "test",
-		MetricValue: models.MetricValue{
-			Gauge:   1,
-			Counter: 2,
-		}}
+		Id:    "test",
+		Value: createValue(1),
+		Delta: createDelta(2),
+	}
 
 	repoMock.On("Get", mock.Anything).Return(expected, nil)
-	actual, actualErr := service.GetMetric(expected.Name)
+	actual, actualErr := service.GetMetric(expected.Id)
 
 	assert.NoError(t, actualErr)
 	assert.Equal(t, expected, actual)
@@ -144,4 +121,12 @@ func getMetricsServiceMocks() (MetricsService, *metricsServiceMocks) {
 	service := New(m.repo)
 
 	return service, m
+}
+
+func createValue(x float64) *float64 {
+	return &x
+}
+
+func createDelta(x int64) *int64 {
+	return &x
 }

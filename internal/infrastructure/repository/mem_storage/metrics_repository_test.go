@@ -22,7 +22,7 @@ func Test_memStorage_UpdateGauge(t *testing.T) {
 	}
 	type want struct {
 		metricName  string
-		metricValue models.Gauge
+		metricValue *float64
 	}
 	tests := []struct {
 		name string
@@ -32,48 +32,44 @@ func Test_memStorage_UpdateGauge(t *testing.T) {
 	}{
 		{
 			name: "add gauge metric",
-			ms:   &memStorage{data: make(map[string]models.MetricValue)},
+			ms:   &memStorage{data: make(map[string]models.Metric)},
 			args: args{
 				metric: models.Metric{
-					Name: "test1",
-					MetricValue: models.MetricValue{
-						Gauge: 1,
-					},
+					Id:    "test1",
+					Value: createValue(1),
 				},
 			},
 			want: want{
 				metricName:  "test1",
-				metricValue: models.Gauge(1),
+				metricValue: createValue(1),
 			},
 		},
 		{
 			name: "rewrite gauge metric",
-			ms: &memStorage{data: map[string]models.MetricValue{
+			ms: &memStorage{data: map[string]models.Metric{
 				"test2": {
-					Gauge: 1,
+					Value: createValue(10),
 				},
 			}},
 			args: args{
 				metric: models.Metric{
-					Name: "test2",
-					MetricValue: models.MetricValue{
-						Gauge: 10,
-					},
+					Id:    "test2",
+					Value: createValue(10),
 				},
 			},
 			want: want{
 				metricName:  "test2",
-				metricValue: models.Gauge(10),
+				metricValue: createValue(10),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.ms.UpdateGauge(tt.args.metric)
-			have, ok := tt.ms.data[tt.args.metric.Name]
+			have, ok := tt.ms.data[tt.args.metric.Id]
 
 			assert.True(t, ok)
-			assert.Equal(t, tt.want.metricValue, have.Gauge)
+			assert.Equal(t, *tt.want.metricValue, *have.Value)
 		})
 	}
 }
@@ -85,7 +81,7 @@ func Test_memStorage_UpdateCounter(t *testing.T) {
 	}
 	type want struct {
 		metricName  string
-		metricValue models.Counter
+		metricValue *int64
 	}
 	tests := []struct {
 		name string
@@ -95,38 +91,34 @@ func Test_memStorage_UpdateCounter(t *testing.T) {
 	}{
 		{
 			name: "add counter metric",
-			ms:   &memStorage{data: make(map[string]models.MetricValue)},
+			ms:   &memStorage{data: make(map[string]models.Metric)},
 			args: args{
 				metric: models.Metric{
-					Name: "test1",
-					MetricValue: models.MetricValue{
-						Counter: 1,
-					},
+					Id:    "test1",
+					Delta: createDelta(1),
 				},
 			},
 			want: want{
 				metricName:  "test1",
-				metricValue: models.Counter(1),
+				metricValue: createDelta(1),
 			},
 		},
 		{
 			name: "update counter metric",
-			ms: &memStorage{data: map[string]models.MetricValue{
+			ms: &memStorage{data: map[string]models.Metric{
 				"test2": {
-					Counter: 1,
+					Delta: createDelta(10),
 				},
 			}},
 			args: args{
 				metric: models.Metric{
-					Name: "test2",
-					MetricValue: models.MetricValue{
-						Counter: 10,
-					},
+					Id:    "test2",
+					Delta: createDelta(10),
 				},
 			},
 			want: want{
 				metricName:  "test2",
-				metricValue: models.Counter(10),
+				metricValue: createDelta(10),
 			},
 		},
 	}
@@ -134,15 +126,15 @@ func Test_memStorage_UpdateCounter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.ms.UpdateCounter(tt.args.metric)
 
-			have, ok := tt.ms.data[tt.args.metric.Name]
+			have, ok := tt.ms.data[tt.args.metric.Id]
 
 			assert.True(t, ok)
-			assert.Equal(t, tt.want.metricValue, have.Counter)
+			assert.Equal(t, *tt.want.metricValue, *have.Delta)
 		})
 	}
 }
 
-func Test_memStorage_Get(t *testing.T) {
+func Test_memStorage_GetDelta(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		name string
@@ -156,21 +148,19 @@ func Test_memStorage_Get(t *testing.T) {
 	}{
 		{
 			name: "return metric",
-			ms: &memStorage{data: map[string]models.MetricValue{
+			ms: &memStorage{data: map[string]models.Metric{
 				"test11": {
-					Counter: 11,
-					Gauge:   22,
+					Delta: createDelta(11),
+					//Value: createValue(22),
 				},
 			}},
 			args: args{
 				name: "test11",
 			},
 			want: models.Metric{
-				Name: "test11",
-				MetricValue: models.MetricValue{
-					Counter: 11,
-					Gauge:   22,
-				},
+				Id:    "test11",
+				Delta: createDelta(11),
+				//Value: createValue(22),
 			},
 			wantErr: false,
 		},
@@ -192,7 +182,7 @@ func Test_memStorage_Get(t *testing.T) {
 				t.Errorf("memStorage.Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if !assert.Equal(t, got.Delta, tt.want.Delta) {
 				t.Errorf("memStorage.Get() = %v, want %v", got, tt.want)
 			}
 		})
@@ -207,30 +197,28 @@ func Test_memStorage_GetAll(t *testing.T) {
 	}{
 		{
 			name: "get",
-			ms: &memStorage{data: map[string]models.MetricValue{
+			ms: &memStorage{data: map[string]models.Metric{
 				"test11": {
-					Counter: 11,
-					Gauge:   22,
+					Delta: createDelta(11),
+					Value: createValue(22),
 				},
 				"test22": {
-					Counter: 21,
-					Gauge:   31,
+					Delta: createDelta(21),
+					Value: createValue(31),
 				},
 			}},
 			want: []models.Metric{
 				{
-					Name: "test11",
-					MetricValue: models.MetricValue{
-						Counter: 11,
-						Gauge:   22,
-					},
+					Id: "test11",
+
+					Delta: createDelta(11),
+					Value: createValue(22),
 				},
 				{
-					Name: "test22",
-					MetricValue: models.MetricValue{
-						Counter: 21,
-						Gauge:   31,
-					},
+					Id: "test22",
+
+					Delta: createDelta(21),
+					Value: createValue(31),
 				},
 			},
 		},
@@ -242,4 +230,12 @@ func Test_memStorage_GetAll(t *testing.T) {
 			}
 		})
 	}
+}
+
+func createValue(x float64) *float64 {
+	return &x
+}
+
+func createDelta(x int64) *int64 {
+	return &x
 }

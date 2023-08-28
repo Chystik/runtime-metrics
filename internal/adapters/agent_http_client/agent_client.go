@@ -1,7 +1,9 @@
 package agenthttpclient
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -26,9 +28,9 @@ func (ac *agentHTTPClient) ReportMetrics(metrics map[string]interface{}) error {
 		var mType string
 
 		switch t := value.(type) {
-		case models.Gauge:
+		case float64:
 			mType = "gauge"
-		case models.Counter:
+		case int64:
 			mType = "counter"
 		default:
 			return fmt.Errorf("unknown metric type: %#v", t)
@@ -46,6 +48,39 @@ func (ac *agentHTTPClient) ReportMetrics(metrics map[string]interface{}) error {
 			return err
 		}
 		response.Body.Close()
+	}
+	return nil
+}
+
+func (ac *agentHTTPClient) ReportMetricsJSON(metrics map[string]models.Metric) error {
+	for _, metric := range metrics {
+		var (
+			buf  bytes.Buffer
+			resp *http.Response
+			err  error
+		)
+
+		url := fmt.Sprintf("http://%s/update/", ac.address)
+		err = json.NewEncoder(&buf).Encode(metric)
+		if err != nil {
+			return err
+		}
+
+		request, err := http.NewRequestWithContext(context.TODO(), http.MethodPost, url, &buf)
+		if err != nil {
+			return err
+		}
+
+		request.Header.Set("Content-Type", "application/json")
+		resp, err = ac.client.Do(request)
+		if err != nil {
+			return err
+		}
+
+		err = resp.Body.Close()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

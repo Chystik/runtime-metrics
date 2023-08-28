@@ -9,6 +9,7 @@ import (
 
 	"github.com/Chystik/runtime-metrics/internal/models"
 	"github.com/Chystik/runtime-metrics/internal/service/server/mocks"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -237,7 +238,7 @@ func Test_metricsHandlers_GetMetric(t *testing.T) {
 			req := httptest.NewRequest(tt.reqMethod, target, nil)
 			rec := httptest.NewRecorder()
 
-			mks.metricsService.On("GetMetric", mock.Anything).Return(models.Metric{}, nil)
+			mks.metricsService.On("GetMetric", mock.Anything).Return(models.Metric{Value: new(float64), Delta: new(int64)}, nil)
 			handlers.GetMetric(rec, req)
 
 			res := rec.Result()

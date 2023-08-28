@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/Chystik/runtime-metrics/config"
-	"github.com/Chystik/runtime-metrics/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +26,7 @@ func Test_agentHTTPClient_ReportMetrics(t *testing.T) {
 			args: args{
 				metricName:    "test1",
 				metricTypeStr: "gauge",
-				metricValue:   models.Gauge(123),
+				metricValue:   float64(123),
 			},
 			wantErr: false,
 		},
@@ -36,7 +35,7 @@ func Test_agentHTTPClient_ReportMetrics(t *testing.T) {
 			args: args{
 				metricName:    "some",
 				metricTypeStr: "counter",
-				metricValue:   models.Counter(123),
+				metricValue:   int64(123),
 			},
 			wantErr: false,
 		},

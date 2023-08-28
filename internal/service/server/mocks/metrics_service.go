@@ -63,23 +63,23 @@ func (_c *MetricsService_GetAllMetrics_Call) RunAndReturn(run func() []models.Me
 	return _c
 }
 
-// GetMetric provides a mock function with given fields: name
-func (_m *MetricsService) GetMetric(name string) (models.Metric, error) {
-	ret := _m.Called(name)
+// GetMetric provides a mock function with given fields: Id
+func (_m *MetricsService) GetMetric(Id string) (models.Metric, error) {
+	ret := _m.Called(Id)
 
 	var r0 models.Metric
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) (models.Metric, error)); ok {
-		return rf(name)
+		return rf(Id)
 	}
 	if rf, ok := ret.Get(0).(func(string) models.Metric); ok {
-		r0 = rf(name)
+		r0 = rf(Id)
 	} else {
 		r0 = ret.Get(0).(models.Metric)
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(name)
+		r1 = rf(Id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -93,12 +93,12 @@ type MetricsService_GetMetric_Call struct {
 }
 
 // GetMetric is a helper method to define mock.On call
-//   - name string
-func (_e *MetricsService_Expecter) GetMetric(name interface{}) *MetricsService_GetMetric_Call {
-	return &MetricsService_GetMetric_Call{Call: _e.mock.On("GetMetric", name)}
+//   - Id string
+func (_e *MetricsService_Expecter) GetMetric(Id interface{}) *MetricsService_GetMetric_Call {
+	return &MetricsService_GetMetric_Call{Call: _e.mock.On("GetMetric", Id)}
 }
 
-func (_c *MetricsService_GetMetric_Call) Run(run func(name string)) *MetricsService_GetMetric_Call {
+func (_c *MetricsService_GetMetric_Call) Run(run func(Id string)) *MetricsService_GetMetric_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(string))
 	})

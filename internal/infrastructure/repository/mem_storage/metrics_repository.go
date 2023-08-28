@@ -10,67 +10,48 @@ import (
 var ErrNotFoundMetric = errors.New("not found in repository")
 
 type memStorage struct {
-	data map[string]models.MetricValue
+	data map[string]models.Metric
 }
 
 func New() *memStorage {
 	return &memStorage{
-		data: make(map[string]models.MetricValue),
+		data: make(map[string]models.Metric),
 	}
 }
 
 func (ms *memStorage) UpdateGauge(metric models.Metric) {
-	var val models.MetricValue
-	var ok bool
-
-	if val, ok = ms.data[metric.Name]; ok {
-		val.Gauge = metric.Gauge
+	m, ok := ms.data[metric.Id]
+	if !ok {
+		ms.data[metric.Id] = metric
 	} else {
-		val = metric.MetricValue
+		m.Value = metric.Value
 	}
 
-	ms.data[metric.Name] = val
 }
 
 func (ms *memStorage) UpdateCounter(metric models.Metric) {
-	var val models.MetricValue
-	var ok bool
-
-	if val, ok = ms.data[metric.Name]; ok {
-		val.Counter = metric.Counter
+	m, ok := ms.data[metric.Id]
+	if !ok {
+		ms.data[metric.Id] = metric
 	} else {
-		val = metric.MetricValue
+		m.Delta = metric.Delta
 	}
-
-	ms.data[metric.Name] = val
 }
 
-func (ms *memStorage) Get(name string) (models.Metric, error) {
-	var metric models.Metric
-
-	val, ok := ms.data[name]
+func (ms *memStorage) Get(Id string) (models.Metric, error) {
+	m, ok := ms.data[Id]
 	if !ok {
-		return models.Metric{}, fmt.Errorf("metric with name %s %w", name, ErrNotFoundMetric)
+		return models.Metric{Id: Id, MType: "", Delta: nil, Value: nil}, fmt.Errorf("metric with Id %s %w", Id, ErrNotFoundMetric)
 	}
 
-	metric.Name = name
-	metric.MetricValue = val
-
-	return metric, nil
+	return m, nil
 }
 
 func (ms *memStorage) GetAll() []models.Metric {
 	var metrics []models.Metric
 
-	for k, v := range ms.data {
-		var m models.Metric
-
-		m.Name = k
-		m.MetricValue = models.MetricValue{
-			Gauge:   v.Gauge,
-			Counter: v.Counter,
-		}
-
+	for _, v := range ms.data {
+		m := v
 		metrics = append(metrics, m)
 	}
 

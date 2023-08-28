@@ -22,8 +22,8 @@ func Test_New(t *testing.T) {
 }
 
 func Test_agentService_UpdateMetrics(t *testing.T) {
-	cache := make(map[string]interface{})
-	cache["PollCount"] = models.Counter(0)
+	cache := make(map[string]models.Metric)
+	cache["PollCount"] = models.Metric{Id: "PollCount", MType: "counter", Delta: new(int64)}
 
 	tests := []struct {
 		name string
@@ -48,7 +48,7 @@ func Test_agentService_UpdateMetrics(t *testing.T) {
 func TestReportMetrics_WhenClientRetunNoError(t *testing.T) {
 	c, mks := getAgentServiceMocks()
 
-	mks.client.On("ReportMetrics", mock.Anything).Return(nil)
+	mks.client.On("ReportMetricsJSON", mock.Anything).Return(nil)
 	c.ReportMetrics()
 }
 
