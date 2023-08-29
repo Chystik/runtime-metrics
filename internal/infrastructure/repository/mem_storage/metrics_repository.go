@@ -1,22 +1,53 @@
 package memstorage
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"time"
 
+	"github.com/Chystik/runtime-metrics/config"
 	"github.com/Chystik/runtime-metrics/internal/models"
 )
 
 var ErrNotFoundMetric = errors.New("not found in repository")
 
 type memStorage struct {
-	data map[string]models.Metric
+	data    map[string]models.Metric
+	file    *os.File
+	encoder *json.Encoder
+	decoder *json.Decoder
+	ticker  *time.Ticker
+	quit    chan bool
 }
 
-func New() *memStorage {
-	return &memStorage{
-		data: make(map[string]models.Metric),
+func New(cfg config.ServerConfig) (*memStorage, error) {
+	var err error
+	ms := &memStorage{}
+	ms.data = make(map[string]models.Metric)
+
+	if cfg.FileStoragePath != "" {
+		ms.file, err = os.OpenFile(cfg.FileStoragePath, os.O_RDWR|os.O_CREATE, 0644)
+		if err != nil {
+			return nil, err
+		}
+
+		ms.quit = make(chan bool)
+		ms.ticker = time.NewTicker(cfg.StoreInterval)
+
+		ms.encoder = json.NewEncoder(ms.file)
+		ms.decoder = json.NewDecoder(ms.file)
+
+		if cfg.Restore {
+			err = ms.readData()
+			if err != nil && err.Error() != "EOF" {
+				return nil, err
+			}
+		}
 	}
+
+	return ms, nil
 }
 
 func (ms *memStorage) UpdateGauge(metric models.Metric) {
@@ -57,4 +88,42 @@ func (ms *memStorage) GetAll() []models.Metric {
 	}
 
 	return metrics
+}
+
+func (ms *memStorage) Shutdown() error {
+	ms.quit <- true
+	defer ms.file.Close()
+	return ms.writeData()
+}
+
+func (ms *memStorage) writeData() error {
+	err := ms.file.Truncate(0)
+	if err != nil {
+		return err
+	}
+
+	_, err = ms.file.Seek(0, 0)
+	if err != nil {
+		return err
+	}
+
+	return ms.encoder.Encode(ms.data)
+}
+
+func (ms *memStorage) readData() error {
+	return ms.decoder.Decode(&ms.data)
+}
+
+func (ms *memStorage) SyncData() error {
+	for {
+		select {
+		case <-ms.ticker.C:
+			err := ms.writeData()
+			if err != nil {
+				return err
+			}
+		case <-ms.quit:
+			return nil
+		}
+	}
 }

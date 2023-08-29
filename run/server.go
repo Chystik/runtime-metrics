@@ -21,10 +21,12 @@ import (
 )
 
 const (
-	logHTTPServerStart            = "HTTP server started on port: %s"
-	logHTTPServerStop             = "Stopped serving new connections"
-	logSignalInterrupt            = "Interrupt signal. Shutdown"
-	logGracefulHTTPServerShutdown = "Graceful shutdown of HTTP Server complete."
+	logHTTPServerStart             = "HTTP server started on port: %s"
+	logHTTPServerStop              = "Stopped serving new connections"
+	logSignalInterrupt             = "Interrupt signal. Shutdown"
+	logGracefulHTTPServerShutdown  = "Graceful shutdown of HTTP Server complete."
+	logStorageSyncStop             = "Stopped saving storage data to a file"
+	logGracefulStorageSyncShutdown = "Graceful shutdown of storage sync complete."
 )
 
 func Server(cfg *config.ServerConfig, quit chan os.Signal) {
@@ -34,7 +36,10 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	}
 
 	// repository
-	metricsRepository := memstorage.New()
+	metricsRepository, err := memstorage.New(*cfg)
+	if err != nil {
+		logger.Log.Fatal(err.Error())
+	}
 
 	// services
 	metricsService := metricsservice.New(metricsRepository)
@@ -48,6 +53,16 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	// handlers
 	metricHandlers := handlers.NewMetricsHandlers(metricsService)
 	handlers.RegisterHandlers(router, metricHandlers)
+
+	// periodically writes repo data to a file
+	if cfg.FileStoragePath != "" {
+		go func() {
+			if err := metricsRepository.SyncData(); err != nil {
+				logger.Log.Fatal(err.Error())
+			}
+			logger.Log.Info(logStorageSyncStop)
+		}()
+	}
 
 	// http server
 	server := restapi.NewServer(cfg, router)
@@ -63,6 +78,12 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	logger.Log.Info(logSignalInterrupt)
 	ctxShutdown, shutdown := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdown()
+
+	// Graceful shutdown storage
+	if err := metricsRepository.Shutdown(); err != nil {
+		logger.Log.Fatal(err.Error())
+	}
+	logger.Log.Info(logGracefulStorageSyncShutdown)
 
 	// Graceful shutdown HTTP Server
 	if err := server.Shutdown(ctxShutdown); err != nil {

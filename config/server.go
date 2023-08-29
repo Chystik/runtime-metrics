@@ -4,19 +4,26 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type (
 	ServerConfig struct {
-		Address  string `env:"ADDRESS"`
-		LogLevel string `env:"LOG_LEVEL"`
+		Address         string        `env:"ADDRESS"`
+		LogLevel        string        `env:"LOG_LEVEL"`
+		StoreInterval   time.Duration `env:"STORE_INTERVAL"`
+		FileStoragePath string        `env:"FILE_STORAGE_PATH"`
+		Restore         bool          `env:"RESTORE"`
 	}
 )
 
 func NewServerCfg() *ServerConfig {
 	cfg := &ServerConfig{
-		Address:  ":8080",
-		LogLevel: "info",
+		Address:         ":8080",
+		LogLevel:        "info",
+		StoreInterval:   300 * time.Second,
+		FileStoragePath: "/tmp/metrics-db.json",
+		Restore:         true,
 	}
 
 	return cfg

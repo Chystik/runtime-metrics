@@ -4,14 +4,16 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/Chystik/runtime-metrics/config"
 	"github.com/Chystik/runtime-metrics/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_New(t *testing.T) {
 	t.Parallel()
-	repo := New()
+	repo, err := New(config.ServerConfig{})
 
+	assert.NoError(t, err)
 	assert.NotNil(t, repo)
 }
 
