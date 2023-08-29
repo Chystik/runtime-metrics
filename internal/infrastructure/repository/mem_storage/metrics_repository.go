@@ -33,7 +33,6 @@ func New(cfg config.ServerConfig) (*memStorage, error) {
 			return nil, err
 		}
 
-		ms.quit = make(chan bool)
 		ms.ticker = time.NewTicker(cfg.StoreInterval)
 
 		ms.encoder = json.NewEncoder(ms.file)
@@ -46,6 +45,8 @@ func New(cfg config.ServerConfig) (*memStorage, error) {
 			}
 		}
 	}
+
+	ms.quit = make(chan bool)
 
 	return ms, nil
 }
@@ -91,7 +92,12 @@ func (ms *memStorage) GetAll() []models.Metric {
 }
 
 func (ms *memStorage) Shutdown() error {
+	if ms.file == nil {
+		return nil
+	}
+
 	ms.quit <- true
+
 	defer ms.file.Close()
 	return ms.writeData()
 }

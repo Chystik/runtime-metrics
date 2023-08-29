@@ -102,7 +102,7 @@ func (ac *agentHTTPClient) ReportMetricsJSON(metrics map[string]models.Metric) e
 		defer reader.Close()
 
 		// does something with decompressed response
-		fmt.Println(p.String())
+		_ = p.String
 	}
 	return nil
 }
