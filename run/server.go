@@ -10,6 +10,7 @@ import (
 
 	"github.com/Chystik/runtime-metrics/config"
 	handlers "github.com/Chystik/runtime-metrics/internal/adapters/rest_api_handlers"
+	"github.com/Chystik/runtime-metrics/internal/compressor"
 	memstorage "github.com/Chystik/runtime-metrics/internal/infrastructure/repository/mem_storage"
 	"github.com/Chystik/runtime-metrics/internal/logger"
 	metricsservice "github.com/Chystik/runtime-metrics/internal/service/server"
@@ -41,6 +42,7 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	// router
 	router := chi.NewRouter()
 	router.Use(logger.WithLogging)
+	router.Use(compressor.GzipMiddleware)
 	router.Use(middleware.Recoverer)
 
 	// handlers

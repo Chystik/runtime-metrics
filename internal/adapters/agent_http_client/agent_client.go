@@ -2,9 +2,11 @@ package agenthttpclient
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/Chystik/runtime-metrics/config"
@@ -54,33 +56,53 @@ func (ac *agentHTTPClient) ReportMetrics(metrics map[string]interface{}) error {
 
 func (ac *agentHTTPClient) ReportMetricsJSON(metrics map[string]models.Metric) error {
 	for _, metric := range metrics {
-		var (
-			buf  bytes.Buffer
-			resp *http.Response
-			err  error
-		)
+		var buf, reqBody bytes.Buffer
 
 		url := fmt.Sprintf("http://%s/update/", ac.address)
-		err = json.NewEncoder(&buf).Encode(metric)
+		err := json.NewEncoder(&buf).Encode(metric)
 		if err != nil {
 			return err
 		}
 
-		request, err := http.NewRequestWithContext(context.TODO(), http.MethodPost, url, &buf)
+		gz := gzip.NewWriter(&reqBody)
+		_, err = gz.Write(buf.Bytes())
 		if err != nil {
 			return err
 		}
 
-		request.Header.Set("Content-Type", "application/json")
-		resp, err = ac.client.Do(request)
+		err = gz.Close()
 		if err != nil {
 			return err
 		}
 
-		err = resp.Body.Close()
+		req, err := http.NewRequestWithContext(context.TODO(), http.MethodPost, url, &reqBody)
 		if err != nil {
 			return err
 		}
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Accept-Encoding", "gzip")
+		req.Header.Set("Content-Encoding", "gzip")
+		resp, err := ac.client.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		reader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		var p bytes.Buffer
+		_, err = io.Copy(&p, reader)
+		if err != nil {
+			return err
+		}
+		defer reader.Close()
+
+		// does something with decompressed response
+		fmt.Println(p.String())
 	}
 	return nil
 }

@@ -56,7 +56,7 @@ func Initialize(level string) error {
 	return nil
 }
 
-func WithLogging(h http.Handler) http.Handler {
+func WithLogging(next http.Handler) http.Handler {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -68,7 +68,7 @@ func WithLogging(h http.Handler) http.Handler {
 			ResponseWriter: w,
 			responseData:   responseData,
 		}
-		h.ServeHTTP(&lw, r)
+		next.ServeHTTP(&lw, r)
 
 		duration := time.Since(start)
 
