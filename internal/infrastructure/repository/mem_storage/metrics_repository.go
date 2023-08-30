@@ -16,7 +16,7 @@ var ErrNotFoundMetric = errors.New("not found in repository")
 
 type memStorage struct {
 	data    map[string]models.Metric
-	lock    *sync.Mutex
+	mu      sync.Mutex
 	file    *os.File
 	encoder *json.Encoder
 	decoder *json.Decoder
@@ -28,7 +28,6 @@ func New(cfg config.ServerConfig) (*memStorage, error) {
 	var err error
 	ms := &memStorage{}
 	ms.data = make(map[string]models.Metric)
-	ms.lock = &sync.Mutex{}
 
 	if cfg.FileStoragePath != "" {
 		ms.file, err = os.OpenFile(cfg.FileStoragePath, os.O_RDWR|os.O_CREATE, 0644)
@@ -55,6 +54,9 @@ func New(cfg config.ServerConfig) (*memStorage, error) {
 }
 
 func (ms *memStorage) UpdateGauge(metric models.Metric) {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
+
 	m, ok := ms.data[metric.ID]
 	if !ok {
 		ms.data[metric.ID] = metric
@@ -65,6 +67,9 @@ func (ms *memStorage) UpdateGauge(metric models.Metric) {
 }
 
 func (ms *memStorage) UpdateCounter(metric models.Metric) {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
+
 	m, ok := ms.data[metric.ID]
 	if !ok {
 		ms.data[metric.ID] = metric
@@ -116,8 +121,8 @@ func (ms *memStorage) writeData() error {
 		return err
 	}
 
-	ms.lock.Lock()
-	defer ms.lock.Unlock()
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
 
 	err = ms.encoder.Encode(ms.data)
 	if err != nil {
@@ -128,8 +133,8 @@ func (ms *memStorage) writeData() error {
 }
 
 func (ms *memStorage) readData() error {
-	ms.lock.Lock()
-	defer ms.lock.Unlock()
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
 
 	err := ms.decoder.Decode(&ms.data)
 	if err != nil {
