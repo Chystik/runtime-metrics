@@ -106,9 +106,6 @@ func (ms *memStorage) Shutdown() error {
 }
 
 func (ms *memStorage) writeData() error {
-	ms.lock.Lock()
-	defer ms.lock.Unlock()
-
 	err := ms.file.Truncate(0)
 	if err != nil {
 		return err
@@ -119,11 +116,27 @@ func (ms *memStorage) writeData() error {
 		return err
 	}
 
-	return ms.encoder.Encode(ms.data)
+	ms.lock.Lock()
+	defer ms.lock.Unlock()
+
+	err = ms.encoder.Encode(ms.data)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (ms *memStorage) readData() error {
-	return ms.decoder.Decode(&ms.data)
+	ms.lock.Lock()
+	defer ms.lock.Unlock()
+
+	err := ms.decoder.Decode(&ms.data)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (ms *memStorage) SyncData() error {
