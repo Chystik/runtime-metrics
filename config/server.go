@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -9,19 +10,21 @@ import (
 
 type (
 	ServerConfig struct {
-		Address         string        `env:"ADDRESS"`
-		LogLevel        string        `env:"LOG_LEVEL"`
-		StoreInterval   time.Duration `env:"STORE_INTERVAL"`
-		FileStoragePath string        `env:"FILE_STORAGE_PATH"`
-		Restore         bool          `env:"RESTORE"`
+		Address         string `env:"ADDRESS"`
+		LogLevel        string `env:"LOG_LEVEL"`
+		StoreInterval   `env:"STORE_INTERVAL"`
+		FileStoragePath string `env:"FILE_STORAGE_PATH"`
+		Restore         bool   `env:"RESTORE"`
 	}
+
+	StoreInterval time.Duration
 )
 
 func NewServerCfg() *ServerConfig {
 	cfg := &ServerConfig{
 		Address:         ":8080",
 		LogLevel:        "info",
-		StoreInterval:   300 * time.Second,
+		StoreInterval:   StoreInterval(300 * time.Second),
 		FileStoragePath: "/tmp/metrics-db.json",
 		Restore:         true,
 	}
@@ -43,5 +46,18 @@ func (cfg *ServerConfig) Set(s string) error {
 		return errors.New("only digits allowed for port in a form host:port")
 	}
 	cfg.Address = s
+	return nil
+}
+
+func (cfg StoreInterval) String() string {
+	return fmt.Sprintf("%d", cfg)
+}
+
+func (cfg *StoreInterval) Set(s string) error {
+	t, err := strconv.Atoi(s)
+	if err != nil {
+		return errors.New("only digits allowed for store intervar")
+	}
+	*cfg = StoreInterval(time.Duration(t) * time.Second)
 	return nil
 }

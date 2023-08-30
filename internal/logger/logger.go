@@ -46,6 +46,7 @@ func Initialize(level string) error {
 	cfg := zap.NewProductionConfig()
 	cfg.Level = lvl
 	cfg.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
+	cfg.OutputPaths = []string{"./server.log", "stderr"}
 
 	zl, err := cfg.Build()
 	if err != nil {

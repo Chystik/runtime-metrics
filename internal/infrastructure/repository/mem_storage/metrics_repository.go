@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
@@ -15,6 +16,7 @@ var ErrNotFoundMetric = errors.New("not found in repository")
 
 type memStorage struct {
 	data    map[string]models.Metric
+	lock    *sync.Mutex
 	file    *os.File
 	encoder *json.Encoder
 	decoder *json.Decoder
@@ -26,6 +28,7 @@ func New(cfg config.ServerConfig) (*memStorage, error) {
 	var err error
 	ms := &memStorage{}
 	ms.data = make(map[string]models.Metric)
+	ms.lock = &sync.Mutex{}
 
 	if cfg.FileStoragePath != "" {
 		ms.file, err = os.OpenFile(cfg.FileStoragePath, os.O_RDWR|os.O_CREATE, 0644)
@@ -33,7 +36,7 @@ func New(cfg config.ServerConfig) (*memStorage, error) {
 			return nil, err
 		}
 
-		ms.ticker = time.NewTicker(cfg.StoreInterval)
+		ms.ticker = time.NewTicker(time.Duration(cfg.StoreInterval))
 
 		ms.encoder = json.NewEncoder(ms.file)
 		ms.decoder = json.NewDecoder(ms.file)
@@ -103,6 +106,9 @@ func (ms *memStorage) Shutdown() error {
 }
 
 func (ms *memStorage) writeData() error {
+	ms.lock.Lock()
+	defer ms.lock.Unlock()
+
 	err := ms.file.Truncate(0)
 	if err != nil {
 		return err
@@ -129,6 +135,7 @@ func (ms *memStorage) SyncData() error {
 				return err
 			}
 		case <-ms.quit:
+			ms.ticker.Stop()
 			return nil
 		}
 	}
