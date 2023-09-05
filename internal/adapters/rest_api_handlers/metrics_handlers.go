@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
+	"log"
 	"net/http"
 	"sort"
 	"strconv"
@@ -15,16 +18,16 @@ const tplStr = `<table>
     <thead>
         <tr>
             <th>Name</th>
-            <th>Gauge Value</th>
-            <th>Counter Value</th>
+            <th>Type</th>
+            <th>Value</th>
         </tr>
     </thead>
     <tbody>
         {{range . }}
             <tr>
                 <td>{{ .Name }}</td>
-                <td>{{ .Gauge }}</td>
-                <td>{{ .Counter }}</td>
+                <td>{{ .Type }}</td>
+                <td>{{ .Value }}</td>
             </tr>
         {{ end }}
     </tbody>
@@ -33,6 +36,8 @@ const tplStr = `<table>
 type MetricsHandlers interface {
 	UpdateMetric(w http.ResponseWriter, r *http.Request)
 	GetMetric(w http.ResponseWriter, r *http.Request)
+	UpdateMetricJSON(w http.ResponseWriter, r *http.Request)
+	GetMetricJSON(w http.ResponseWriter, r *http.Request)
 	AllMetrics(w http.ResponseWriter, r *http.Request)
 }
 
@@ -65,30 +70,32 @@ func (mh *metricsHandlers) UpdateMetric(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	metric.Name = path[1]
+	metric.ID = path[1]
 
 	switch path[0] {
 	case "gauge":
-		var val float64
+		v := new(float64)
 
-		val, err = strconv.ParseFloat(path[2], 64)
+		*v, err = strconv.ParseFloat(path[2], 64)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		metric.Gauge = models.Gauge(val)
+		metric.Value = v
 		mh.metricsService.UpdateGauge(metric)
 	case "counter":
 		var val int
+		var v = new(int64)
 
 		val, err = strconv.Atoi(path[2])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		*v = int64(val)
 
-		metric.Counter = models.Counter(val)
+		metric.Delta = v
 		mh.metricsService.UpdateCounter(metric)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
@@ -104,6 +111,7 @@ func (mh *metricsHandlers) GetMetric(w http.ResponseWriter, r *http.Request) {
 		pathRaw    string
 		path       []string
 		metricName string
+		metricType string
 		metric     models.Metric
 		result     string
 		err        error
@@ -123,17 +131,19 @@ func (mh *metricsHandlers) GetMetric(w http.ResponseWriter, r *http.Request) {
 	}
 
 	metricName = path[1]
-	metric, err = mh.metricsService.GetMetric(metricName)
+	metricType = path[0]
+
+	metric, err = mh.metricsService.GetMetric(models.Metric{ID: metricName, MType: metricType})
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	switch path[0] {
+	switch metricType {
 	case "gauge":
-		result = strconv.FormatFloat(float64(metric.Gauge), 'f', -1, 64)
+		result = strconv.FormatFloat(*metric.Value, 'f', -1, 64)
 	case "counter":
-		result = strconv.FormatInt(int64(metric.Counter), 10)
+		result = strconv.FormatInt(*metric.Delta, 10)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -143,28 +153,102 @@ func (mh *metricsHandlers) GetMetric(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write([]byte(result))
 	if err != nil {
-		panic(err)
+		log.Println(err)
+	}
+}
+
+func (mh *metricsHandlers) UpdateMetricJSON(w http.ResponseWriter, r *http.Request) {
+	var (
+		metric models.Metric
+		buf    bytes.Buffer
+		err    error
+	)
+
+	err = json.NewDecoder(r.Body).Decode(&metric)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	switch metric.MType {
+	case "gauge":
+		mh.metricsService.UpdateGauge(metric)
+	case "counter":
+		mh.metricsService.UpdateCounter(metric)
+	}
+
+	err = json.NewEncoder(&buf).Encode(metric)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(buf.Bytes())
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func (mh *metricsHandlers) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
+	var (
+		metric models.Metric
+		buf    bytes.Buffer
+		err    error
+	)
+
+	err = json.NewDecoder(r.Body).Decode(&metric)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	m, err := mh.metricsService.GetMetric(metric)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	err = json.NewEncoder(&buf).Encode(m)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(buf.Bytes())
+	if err != nil {
+		log.Println(err)
 	}
 }
 
 func (mh *metricsHandlers) AllMetrics(w http.ResponseWriter, r *http.Request) {
 	type formatMetrics struct {
-		Name, Gauge, Counter string
+		Name, Type, Value string
 	}
 
 	var fm []formatMetrics
 
 	tpl, err := template.New("table").Parse(tplStr)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 
 	m := mh.metricsService.GetAllMetrics()
 
 	for i := range m {
-		g := strconv.FormatFloat(float64(m[i].Gauge), 'f', -1, 64)
-		c := strconv.FormatInt(int64(m[i].Counter), 10)
-		fm = append(fm, formatMetrics{Name: m[i].Name, Gauge: g, Counter: c})
+		var v string
+
+		if m[i].Value != nil {
+			v = strconv.FormatFloat(*m[i].Value, 'f', -1, 64)
+		}
+		if m[i].Delta != nil {
+			v = strconv.FormatInt(*m[i].Delta, 10)
+		}
+
+		fm = append(fm, formatMetrics{Name: m[i].ID, Type: m[i].MType, Value: v})
 	}
 
 	sort.Slice(fm, func(i, j int) bool {
@@ -175,6 +259,6 @@ func (mh *metricsHandlers) AllMetrics(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	err = tpl.Execute(w, fm)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 }

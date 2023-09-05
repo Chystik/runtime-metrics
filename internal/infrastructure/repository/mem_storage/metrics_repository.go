@@ -3,74 +3,65 @@ package memstorage
 import (
 	"errors"
 	"fmt"
+	"sync"
 
+	"github.com/Chystik/runtime-metrics/config"
 	"github.com/Chystik/runtime-metrics/internal/models"
 )
 
-var ErrNotFoundMetric = errors.New("not found in repository")
+var (
+	ErrNotFoundMetric = errors.New("not found in repository")
+)
 
-type memStorage struct {
-	data map[string]models.MetricValue
+type MemStorage struct {
+	Data map[string]models.Metric
+	Mu   sync.Mutex
 }
 
-func New() *memStorage {
-	return &memStorage{
-		data: make(map[string]models.MetricValue),
-	}
+func New(cfg *config.ServerConfig) *MemStorage {
+	return &MemStorage{Data: make(map[string]models.Metric)}
 }
 
-func (ms *memStorage) UpdateGauge(metric models.Metric) {
-	var val models.MetricValue
-	var ok bool
+func (ms *MemStorage) UpdateGauge(metric models.Metric) {
+	ms.Mu.Lock()
+	defer ms.Mu.Unlock()
 
-	if val, ok = ms.data[metric.Name]; ok {
-		val.Gauge = metric.Gauge
-	} else {
-		val = metric.MetricValue
-	}
-
-	ms.data[metric.Name] = val
-}
-
-func (ms *memStorage) UpdateCounter(metric models.Metric) {
-	var val models.MetricValue
-	var ok bool
-
-	if val, ok = ms.data[metric.Name]; ok {
-		val.Counter = metric.Counter
-	} else {
-		val = metric.MetricValue
-	}
-
-	ms.data[metric.Name] = val
-}
-
-func (ms *memStorage) Get(name string) (models.Metric, error) {
-	var metric models.Metric
-
-	val, ok := ms.data[name]
+	m, ok := ms.Data[metric.ID]
 	if !ok {
-		return models.Metric{}, fmt.Errorf("metric with name %s %w", name, ErrNotFoundMetric)
+		ms.Data[metric.ID] = metric
+	} else {
+		m.Value = metric.Value
+		ms.Data[metric.ID] = m
 	}
-
-	metric.Name = name
-	metric.MetricValue = val
-
-	return metric, nil
 }
 
-func (ms *memStorage) GetAll() []models.Metric {
+func (ms *MemStorage) UpdateCounter(metric models.Metric) {
+	ms.Mu.Lock()
+	defer ms.Mu.Unlock()
+
+	m, ok := ms.Data[metric.ID]
+	if !ok {
+		ms.Data[metric.ID] = metric
+	} else {
+		m.Delta = metric.Delta
+		ms.Data[metric.ID] = m
+	}
+}
+
+func (ms *MemStorage) Get(metric models.Metric) (models.Metric, error) {
+	m, ok := ms.Data[metric.ID]
+	if !ok {
+		return models.Metric{ID: metric.ID, MType: "", Delta: nil, Value: nil}, fmt.Errorf("metric with ID %s %w", metric.ID, ErrNotFoundMetric)
+	}
+
+	return m, nil
+}
+
+func (ms *MemStorage) GetAll() []models.Metric {
 	var metrics []models.Metric
 
-	for k, v := range ms.data {
-		var m models.Metric
-
-		m.Name = k
-		m.MetricValue = models.MetricValue{
-			Gauge:   v.Gauge,
-			Counter: v.Counter,
-		}
-
+	for _, v := range ms.Data {
+		m := v
 		metrics = append(metrics, m)
 	}
 

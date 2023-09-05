@@ -13,7 +13,7 @@ import (
 
 func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 	client := httpclient.NewHTTPClient(cfg)
-	agentClient := agenthttpclient.New(client, cfg) //adapters.NewAgentClient(client, cfg)
+	agentClient := agenthttpclient.New(client, cfg)
 	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
 
 	updateTicker := time.NewTicker(time.Duration(cfg.PollInterval))

@@ -10,7 +10,7 @@ import (
 type MetricsService interface {
 	UpdateGauge(models.Metric)
 	UpdateCounter(models.Metric)
-	GetMetric(name string) (models.Metric, error)
+	GetMetric(models.Metric) (models.Metric, error)
 	GetAllMetrics() []models.Metric
 }
 
@@ -27,22 +27,17 @@ func (ss *metricsService) UpdateGauge(metric models.Metric) {
 }
 
 func (ss *metricsService) UpdateCounter(metric models.Metric) {
-	m, err := ss.metricsRepo.Get(metric.Name)
+	m, err := ss.metricsRepo.Get(metric)
 	if errors.Is(err, memstorage.ErrNotFoundMetric) {
-		m.Name = metric.Name
-		m.Counter = metric.Counter
+		m = metric
 	} else {
-		m.Counter += metric.Counter
+		*m.Delta = *m.Delta + *metric.Delta
 	}
 	ss.metricsRepo.UpdateCounter(m)
 }
 
-func (ss *metricsService) GetMetric(name string) (models.Metric, error) {
-	m, err := ss.metricsRepo.Get(name)
-	if err != nil {
-		return models.Metric{}, err
-	}
-	return m, nil
+func (ss *metricsService) GetMetric(metric models.Metric) (models.Metric, error) {
+	return ss.metricsRepo.Get(metric)
 }
 
 func (ss *metricsService) GetAllMetrics() []models.Metric {

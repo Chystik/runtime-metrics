@@ -1,6 +1,7 @@
 package agentservice
 
 import (
+	"fmt"
 	"math/rand"
 	"reflect"
 	"runtime"
@@ -18,13 +19,18 @@ type AgentService interface {
 type agentService struct {
 	collectableMetrics config.CollectableMetrics
 	runtimeMetrics     runtime.MemStats
-	cache              map[string]interface{}
+	cache              map[string]models.Metric
 	client             adapters.AgentHTTPClient
 }
 
 func New(c adapters.AgentHTTPClient, cm config.CollectableMetrics) *agentService {
-	cache := make(map[string]interface{})
-	cache["PollCount"] = models.Counter(0)
+	cache := make(map[string]models.Metric)
+
+	cache["PollCount"] = models.Metric{ID: "PollCount", MType: "counter", Delta: new(int64)}
+	cache["RandomValue"] = models.Metric{ID: "RandomValue", MType: "gauge", Value: new(float64)}
+	for i := range cm {
+		cache[cm[i]] = models.Metric{ID: cm[i], Value: new(float64)}
+	}
 
 	return &agentService{
 		collectableMetrics: cm,
@@ -42,32 +48,43 @@ func (as *agentService) UpdateMetrics() {
 		f := r.FieldByName(as.collectableMetrics[i])
 		v := f.Interface()
 
-		var val interface{}
-
-		switch v := v.(type) {
-		case float64:
-			val = models.Gauge(v)
-		case uint64:
-			val = models.Gauge(v)
-		case uint32:
-			val = models.Gauge(v)
+		m, ok := as.cache[as.collectableMetrics[i]]
+		if !ok {
+			continue
 		}
 
-		as.cache[as.collectableMetrics[i]] = val
+		switch val := v.(type) {
+		case float64:
+			m.MType = "gauge"
+			*m.Value = val
+		case uint64:
+			m.MType = "gauge"
+			*m.Value = float64(val)
+		case uint32:
+			m.MType = "gauge"
+			*m.Value = float64(val)
+		}
+		m.ID = as.collectableMetrics[i]
+		as.cache[as.collectableMetrics[i]] = m
 	}
 
-	v, ok := as.cache["PollCount"]
-	if !ok {
-		panic("can't get PollCount from cache")
+	pc, ok := as.cache["PollCount"]
+	if ok {
+		*pc.Delta += 1
+		as.cache["PollCount"] = pc
 	}
 
-	as.cache["PollCount"] = models.Counter(v.(models.Counter) + 1)
-	as.cache["RandomValue"] = models.Gauge(rand.Intn(1000))
+	rv, ok := as.cache["RandomValue"]
+	if ok {
+		*rv.Value = float64(rand.Intn(1000))
+		as.cache["RandomValue"] = rv
+	}
+
 }
 
 func (as *agentService) ReportMetrics() {
-	err := as.client.ReportMetrics(as.cache)
+	err := as.client.ReportMetricsJSON(as.cache)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 }
