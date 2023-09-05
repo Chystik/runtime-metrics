@@ -76,7 +76,7 @@ func TestGetMetric_WhenRepoReturnResult(t *testing.T) {
 	}
 
 	repoMock.On("Get", mock.Anything).Return(expected, nil)
-	actual, actualErr := service.GetMetric(expected.ID)
+	actual, actualErr := service.GetMetric(expected)
 
 	assert.NoError(t, actualErr)
 	assert.Equal(t, expected, actual)
@@ -91,7 +91,7 @@ func TestGetMetric_WhenRepoReturnError(t *testing.T) {
 	expError := errors.New("some error")
 
 	repoMock.On("Get", mock.Anything).Return(expected, expError)
-	actual, actualErr := service.GetMetric("some name")
+	actual, actualErr := service.GetMetric(models.Metric{ID: "some name"})
 
 	assert.ErrorIs(t, expError, actualErr)
 	assert.Equal(t, expected, actual)

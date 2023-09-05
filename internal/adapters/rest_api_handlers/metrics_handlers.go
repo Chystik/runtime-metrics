@@ -111,6 +111,7 @@ func (mh *metricsHandlers) GetMetric(w http.ResponseWriter, r *http.Request) {
 		pathRaw    string
 		path       []string
 		metricName string
+		metricType string
 		metric     models.Metric
 		result     string
 		err        error
@@ -130,13 +131,15 @@ func (mh *metricsHandlers) GetMetric(w http.ResponseWriter, r *http.Request) {
 	}
 
 	metricName = path[1]
-	metric, err = mh.metricsService.GetMetric(metricName)
+	metricType = path[0]
+
+	metric, err = mh.metricsService.GetMetric(models.Metric{ID: metricName, MType: metricType})
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	switch path[0] {
+	switch metricType {
 	case "gauge":
 		result = strconv.FormatFloat(*metric.Value, 'f', -1, 64)
 	case "counter":
@@ -201,7 +204,7 @@ func (mh *metricsHandlers) GetMetricJSON(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	m, err := mh.metricsService.GetMetric(metric.ID)
+	m, err := mh.metricsService.GetMetric(metric)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return

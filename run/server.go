@@ -12,8 +12,10 @@ import (
 	handlers "github.com/Chystik/runtime-metrics/internal/adapters/rest_api_handlers"
 	"github.com/Chystik/runtime-metrics/internal/compressor"
 	memstorage "github.com/Chystik/runtime-metrics/internal/infrastructure/repository/mem_storage"
+	localfs "github.com/Chystik/runtime-metrics/internal/infrastructure/storage/local"
 	"github.com/Chystik/runtime-metrics/internal/logger"
 	metricsservice "github.com/Chystik/runtime-metrics/internal/service/server"
+	"github.com/Chystik/runtime-metrics/internal/syncer"
 	"github.com/Chystik/runtime-metrics/internal/transport/restapi"
 
 	"github.com/go-chi/chi/middleware"
@@ -25,24 +27,33 @@ const (
 	logHTTPServerStop              = "Stopped serving new connections"
 	logSignalInterrupt             = "Interrupt signal. Shutdown"
 	logGracefulHTTPServerShutdown  = "Graceful shutdown of HTTP Server complete."
+	logStorageSyncStart            = "data syncronization to file %s with interval %v started"
 	logStorageSyncStop             = "Stopped saving storage data to a file"
 	logGracefulStorageSyncShutdown = "Graceful shutdown of storage sync complete."
 )
 
 func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	// logger
-	if err := logger.Initialize(cfg.LogLevel); err != nil {
-		logger.Log.Fatal(err.Error())
+	logger, err := logger.Initialize(cfg.LogLevel)
+	if err != nil {
+		logger.Fatal(err.Error())
 	}
 
 	// repository
-	metricsRepository, err := memstorage.New(*cfg)
+	meticsRepository := memstorage.New(cfg)
+
+	localStorage, err := localfs.New(cfg, meticsRepository)
 	if err != nil {
-		logger.Log.Fatal(err.Error())
+		logger.Fatal(err.Error())
+	}
+
+	repoWithSyncer, err := syncer.New(cfg, meticsRepository, localStorage)
+	if err != nil {
+		logger.Fatal(err.Error())
 	}
 
 	// services
-	metricsService := metricsservice.New(metricsRepository)
+	metricsService := metricsservice.New(repoWithSyncer)
 
 	// router
 	router := chi.NewRouter()
@@ -54,40 +65,39 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	metricHandlers := handlers.NewMetricsHandlers(metricsService)
 	handlers.RegisterHandlers(router, metricHandlers)
 
-	// periodically writes repo data to a file
-	if cfg.FileStoragePath != "" {
-		go func() {
-			if err := metricsRepository.SyncData(); err != nil {
-				logger.Log.Fatal(err.Error())
-			}
-			logger.Log.Info(logStorageSyncStop)
-		}()
-	}
+	// periodically or permanently writes repo data to a file
+	go func() {
+		logger.Info(fmt.Sprintf(logStorageSyncStart, cfg.FileStoragePath, time.Duration(cfg.StoreInterval)))
+		if err := repoWithSyncer.SyncData(); err != nil {
+			logger.Fatal(err.Error())
+		}
+		logger.Info(logStorageSyncStop)
+	}()
 
 	// http server
 	server := restapi.NewServer(cfg, router)
 	go func() {
-		logger.Log.Info(fmt.Sprintf(logHTTPServerStart, cfg.Address))
+		logger.Info(fmt.Sprintf(logHTTPServerStart, cfg.Address))
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			logger.Log.Fatal(err.Error())
+			logger.Fatal(err.Error())
 		}
-		logger.Log.Info(logHTTPServerStop)
+		logger.Info(logHTTPServerStop)
 	}()
 
 	<-quit
-	logger.Log.Info(logSignalInterrupt)
+	logger.Info(logSignalInterrupt)
 	ctxShutdown, shutdown := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdown()
 
-	// Graceful shutdown storage
-	if err := metricsRepository.Shutdown(); err != nil {
-		logger.Log.Fatal(err.Error())
+	// Graceful shutdown syncer
+	if err := repoWithSyncer.Shutdown(ctxShutdown); err != nil {
+		logger.Fatal(err.Error())
 	}
-	logger.Log.Info(logGracefulStorageSyncShutdown)
+	logger.Info(logGracefulStorageSyncShutdown)
 
 	// Graceful shutdown HTTP Server
 	if err := server.Shutdown(ctxShutdown); err != nil {
-		logger.Log.Fatal(err.Error())
+		logger.Fatal(err.Error())
 	}
-	logger.Log.Info(logGracefulHTTPServerShutdown)
+	logger.Info(logGracefulHTTPServerShutdown)
 }
