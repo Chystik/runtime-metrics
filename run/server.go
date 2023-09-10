@@ -31,7 +31,7 @@ const (
 	logStorageSyncStart            = "data syncronization to file %s with interval %v started"
 	logStorageSyncStop             = "Stopped saving storage data to a file"
 	logGracefulStorageSyncShutdown = "Graceful shutdown of storage sync complete."
-	logDbDisconnect                = "Graceful close connection for DB client complete."
+	logDBDisconnect                = "Graceful close connection for DB client complete."
 )
 
 func Server(cfg *config.ServerConfig, quit chan os.Signal) {
@@ -113,5 +113,5 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	if err := pgClient.Disconnect(ctxShutdown); err != nil {
 		logger.Fatal(err.Error())
 	}
-	logger.Info(logDbDisconnect)
+	logger.Info(logDBDisconnect)
 }

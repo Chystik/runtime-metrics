@@ -16,14 +16,14 @@ type pgClient struct {
 }
 
 func NewPgClient(cfg *config.ServerConfig) (*pgClient, error) {
-	db, err := sqlx.Open("pgx", cfg.DbDsn)
+	db, err := sqlx.Open("pgx", cfg.DBDsn)
 	if err != nil {
 		return nil, err
 	}
 
 	return &pgClient{
 		db:  db,
-		dsn: cfg.DbDsn,
+		dsn: cfg.DBDsn,
 	}, nil
 }
 
