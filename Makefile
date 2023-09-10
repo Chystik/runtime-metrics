@@ -25,7 +25,8 @@ test-one:
 	-agent-binary-path=$(agent-bin) \
 	-binary-path=$(server-bin) \
 	-server-port=8080 -source-path=. \
-	-file-storage-path=./data.json
+	-file-storage-path=./data.json \
+	-database-dsn='postgres://postgres:postgres@localhost:5432/?sslmode=disable'
 	rm $(agent-bin) $(server-bin)
 
 # use: make test-all iter=9
@@ -45,7 +46,8 @@ test-all:
 	-binary-path=$(server-bin) \
 	-server-port=8080 \
 	-source-path=. \
-	-file-storage-path=./data.json
+	-file-storage-path=./data.json \
+	-database-dsn='postgres://postgres:postgres@localhost:5432/?sslmode=disable'
 	rm $(agent-bin) $(server-bin)
 
 gen:

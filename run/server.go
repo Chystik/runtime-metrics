@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
+	"github.com/Chystik/runtime-metrics/internal/adapters/db"
 	handlers "github.com/Chystik/runtime-metrics/internal/adapters/rest_api_handlers"
 	"github.com/Chystik/runtime-metrics/internal/compressor"
 	memstorage "github.com/Chystik/runtime-metrics/internal/infrastructure/repository/mem_storage"
@@ -30,6 +31,7 @@ const (
 	logStorageSyncStart            = "data syncronization to file %s with interval %v started"
 	logStorageSyncStop             = "Stopped saving storage data to a file"
 	logGracefulStorageSyncShutdown = "Graceful shutdown of storage sync complete."
+	logDbDisconnect                = "Graceful close connection for DB client complete."
 )
 
 func Server(cfg *config.ServerConfig, quit chan os.Signal) {
@@ -52,6 +54,12 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 		logger.Fatal(err.Error())
 	}
 
+	// postgres client
+	pgClient, err := db.NewPgClient(cfg)
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+
 	// services
 	metricsService := metricsservice.New(repoWithSyncer)
 
@@ -63,7 +71,7 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 
 	// handlers
 	metricHandlers := handlers.NewMetricsHandlers(metricsService)
-	handlers.RegisterHandlers(router, metricHandlers)
+	handlers.RegisterHandlers(router, metricHandlers, pgClient)
 
 	// periodically or permanently writes repo data to a file
 	go func() {
@@ -100,4 +108,10 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 		logger.Fatal(err.Error())
 	}
 	logger.Info(logGracefulHTTPServerShutdown)
+
+	// Graceful disconnect db client
+	if err := pgClient.Disconnect(ctxShutdown); err != nil {
+		logger.Fatal(err.Error())
+	}
+	logger.Info(logDbDisconnect)
 }

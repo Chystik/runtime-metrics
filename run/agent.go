@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
-	agenthttpclient "github.com/Chystik/runtime-metrics/internal/adapters/agent_http_client"
+	agenthttpclient "github.com/Chystik/runtime-metrics/internal/adapters/http_client"
 	agentservice "github.com/Chystik/runtime-metrics/internal/service/agent"
-	httpclient "github.com/Chystik/runtime-metrics/internal/transport/agent"
+	"github.com/Chystik/runtime-metrics/internal/transport/httpclient"
 )
 
 func Agent(cfg *config.AgentConfig, quit chan os.Signal) {

@@ -33,14 +33,6 @@ const tplStr = `<table>
     </tbody>
 </table>`
 
-type MetricsHandlers interface {
-	UpdateMetric(w http.ResponseWriter, r *http.Request)
-	GetMetric(w http.ResponseWriter, r *http.Request)
-	UpdateMetricJSON(w http.ResponseWriter, r *http.Request)
-	GetMetricJSON(w http.ResponseWriter, r *http.Request)
-	AllMetrics(w http.ResponseWriter, r *http.Request)
-}
-
 type metricsHandlers struct {
 	metricsService metricsservice.MetricsService
 }
