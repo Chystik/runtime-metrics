@@ -2,6 +2,7 @@ package syncer
 
 import (
 	"context"
+	"errors"
 	"io"
 	"sync"
 	"time"
@@ -34,7 +35,7 @@ func (s *syncer) Initialize(cfg *config.ServerConfig, src metricsservice.Metrics
 
 	if cfg.Restore {
 		err := s.dst.Read()
-		if err != nil && err != io.EOF {
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}

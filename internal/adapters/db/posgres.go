@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -61,12 +63,16 @@ func (pc *pgClient) Connect(ctx context.Context) (*sqlx.DB, error) {
 
 	_, err = pc.db.Exec(fmt.Sprintf("CREATE DATABASE %s", pc.c.Database))
 	if err != nil {
-		pgEr, ok := err.(*pgconn.PgError)
+		var pgErr *pgconn.PgError
+		if !errors.As(err, &pgErr) || pgerrcode.DuplicateDatabase != pgErr.Code {
+			return nil, err
+		}
+		/* pgEr, ok := err.(*pgconn.PgError)
 		if !ok { // not pgconn error
 			return nil, err
 		} else if pgEr.Code != "42P04" { // database <db_name> already exists (SQLSTATE 42P04)
 			return nil, err
-		}
+		} */
 	}
 
 	pc.db, err = sqlx.ConnectContext(ctx, "pgx", fmt.Sprintf(connStrDB, pc.c.Host, pc.c.Port, pc.c.User, pc.c.Password, pc.c.Database, SSLmode))

@@ -2,7 +2,10 @@ module github.com/Chystik/runtime-metrics
 
 go 1.20
 
-require github.com/stretchr/testify v1.8.4
+require (
+	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
+	github.com/stretchr/testify v1.8.4
+)
 
 require (
 	github.com/cockroachdb/apd v1.1.0 // indirect
@@ -27,7 +30,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/chi/v5 v5.0.10
-	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jackc/pgx/v5 v5.4.3
