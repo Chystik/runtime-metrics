@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"sort"
@@ -79,7 +80,7 @@ func (mh *metricsHandlers) UpdateMetric(w http.ResponseWriter, r *http.Request) 
 		metric.Value = v
 		err = mh.metricsService.UpdateGauge(ctx, metric)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	case "counter":
@@ -96,7 +97,7 @@ func (mh *metricsHandlers) UpdateMetric(w http.ResponseWriter, r *http.Request) 
 		metric.Delta = v
 		err = mh.metricsService.UpdateCounter(ctx, metric)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	default:
@@ -170,6 +171,7 @@ func (mh *metricsHandlers) UpdateMetricJSON(w http.ResponseWriter, r *http.Reque
 
 	err = json.NewDecoder(r.Body).Decode(&metric)
 	if err != nil {
+		fmt.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

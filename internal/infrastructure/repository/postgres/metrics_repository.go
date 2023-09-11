@@ -92,5 +92,10 @@ func (pg *pgRepo) GetAll(ctx context.Context) ([]models.Metric, error) {
 		metrics = append(metrics, m)
 	}
 
+	if rows.Err() != nil {
+		return nil, err
+	}
+	rows.Close()
+
 	return metrics, nil
 }
