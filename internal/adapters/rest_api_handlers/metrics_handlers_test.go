@@ -33,7 +33,7 @@ func TestUpdateGaugeMetric(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/update/gauge/test1/25", nil)
 	rec := httptest.NewRecorder()
 
-	mks.metricsService.EXPECT().UpdateGauge(mock.Anything).Return()
+	mks.metricsService.EXPECT().UpdateGauge(mock.Anything, mock.Anything).Return(nil)
 	handlers.UpdateMetric(rec, req)
 
 	res := rec.Result()
@@ -152,7 +152,7 @@ func Test_metricsHandlers_UpdateMetric(t *testing.T) {
 			rec := httptest.NewRecorder()
 
 			methodName := fmt.Sprintf("Update%s", tt.metric.mName)
-			mks.metricsService.On(methodName, mock.Anything).Return()
+			mks.metricsService.On(methodName, mock.Anything, mock.Anything).Return(nil)
 			handlers.UpdateMetric(rec, req)
 
 			res := rec.Result()
@@ -239,7 +239,7 @@ func Test_metricsHandlers_GetMetric(t *testing.T) {
 			req := httptest.NewRequest(tt.reqMethod, target, nil)
 			rec := httptest.NewRecorder()
 
-			mks.metricsService.On("GetMetric", mock.Anything).Return(models.Metric{Value: new(float64), Delta: new(int64)}, nil)
+			mks.metricsService.On("GetMetric", mock.Anything, mock.Anything).Return(models.Metric{Value: new(float64), Delta: new(int64)}, nil)
 			handlers.GetMetric(rec, req)
 
 			res := rec.Result()
@@ -279,7 +279,7 @@ func Test_metricsHandlers_AllMetrics(t *testing.T) {
 	for _, tt := range tests {
 		handlers, mks := getMetricsHandlersMocks()
 		t.Run(tt.name, func(t *testing.T) {
-			mks.metricsService.On("GetAllMetrics").Return([]models.Metric{})
+			mks.metricsService.On("GetAllMetrics", mock.Anything).Return([]models.Metric{}, nil)
 			handlers.AllMetrics(tt.args.w, tt.args.r)
 
 			res := tt.args.w.Result()

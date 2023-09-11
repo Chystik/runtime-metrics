@@ -16,6 +16,8 @@ func RegisterHandlers(router *chi.Mux, h adapters.MetricsHandlers, pg adapters.P
 		r.Post("/*", h.GetMetric)
 	})
 	router.Get("/value/*", h.GetMetric)
-	router.Get("/ping", pg.PingHandler)
+	if pg != nil {
+		router.Get("/ping", pg.PingHandler)
+	}
 	router.Get("/", h.AllMetrics)
 }

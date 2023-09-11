@@ -1,10 +1,14 @@
 package metricsservice
 
-import "github.com/Chystik/runtime-metrics/internal/models"
+import (
+	"context"
+
+	"github.com/Chystik/runtime-metrics/internal/models"
+)
 
 type MetricsRepository interface {
-	UpdateGauge(models.Metric)
-	UpdateCounter(models.Metric)
-	Get(models.Metric) (models.Metric, error)
-	GetAll() []models.Metric
+	UpdateGauge(context.Context, models.Metric) error
+	UpdateCounter(context.Context, models.Metric) error
+	Get(context.Context, models.Metric) (models.Metric, error)
+	GetAll(context.Context) ([]models.Metric, error)
 }
