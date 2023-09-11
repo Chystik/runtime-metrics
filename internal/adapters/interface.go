@@ -11,13 +11,15 @@ import (
 type AgentHTTPClient interface {
 	ReportMetrics(metrics map[string]interface{}) error
 	ReportMetricsJSON(metrics map[string]models.Metric) error
+	ReportMetricsJSONBatch(metrics map[string]models.Metric) error
 }
 
 type MetricsHandlers interface {
-	UpdateMetric(w http.ResponseWriter, r *http.Request)
 	GetMetric(w http.ResponseWriter, r *http.Request)
-	UpdateMetricJSON(w http.ResponseWriter, r *http.Request)
 	GetMetricJSON(w http.ResponseWriter, r *http.Request)
+	UpdateMetric(w http.ResponseWriter, r *http.Request)
+	UpdateMetricJSON(w http.ResponseWriter, r *http.Request)
+	UpdateMetricsJSON(w http.ResponseWriter, r *http.Request)
 	AllMetrics(w http.ResponseWriter, r *http.Request)
 }
 

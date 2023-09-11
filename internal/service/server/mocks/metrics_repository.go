@@ -130,6 +130,49 @@ func (_c *MetricsRepository_GetAll_Call) RunAndReturn(run func(context.Context) 
 	return _c
 }
 
+// UpdateAll provides a mock function with given fields: _a0, _a1
+func (_m *MetricsRepository) UpdateAll(_a0 context.Context, _a1 []models.Metric) error {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, []models.Metric) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MetricsRepository_UpdateAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateAll'
+type MetricsRepository_UpdateAll_Call struct {
+	*mock.Call
+}
+
+// UpdateAll is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 []models.Metric
+func (_e *MetricsRepository_Expecter) UpdateAll(_a0 interface{}, _a1 interface{}) *MetricsRepository_UpdateAll_Call {
+	return &MetricsRepository_UpdateAll_Call{Call: _e.mock.On("UpdateAll", _a0, _a1)}
+}
+
+func (_c *MetricsRepository_UpdateAll_Call) Run(run func(_a0 context.Context, _a1 []models.Metric)) *MetricsRepository_UpdateAll_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]models.Metric))
+	})
+	return _c
+}
+
+func (_c *MetricsRepository_UpdateAll_Call) Return(_a0 error) *MetricsRepository_UpdateAll_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MetricsRepository_UpdateAll_Call) RunAndReturn(run func(context.Context, []models.Metric) error) *MetricsRepository_UpdateAll_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateCounter provides a mock function with given fields: _a0, _a1
 func (_m *MetricsRepository) UpdateCounter(_a0 context.Context, _a1 models.Metric) error {
 	ret := _m.Called(_a0, _a1)

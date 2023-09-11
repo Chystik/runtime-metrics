@@ -106,3 +106,45 @@ func (ac *agentHTTPClient) ReportMetricsJSON(metrics map[string]models.Metric) e
 	}
 	return nil
 }
+
+func (ac *agentHTTPClient) ReportMetricsJSONBatch(metrics map[string]models.Metric) error {
+	var ms []models.Metric
+	var buf, reqBody bytes.Buffer
+
+	for _, m := range metrics {
+		ms = append(ms, m)
+	}
+
+	url := fmt.Sprintf("http://%s/updates/", ac.address)
+	err := json.NewEncoder(&buf).Encode(ms)
+	if err != nil {
+		return err
+	}
+
+	gz := gzip.NewWriter(&reqBody)
+	_, err = gz.Write(buf.Bytes())
+	if err != nil {
+		return err
+	}
+
+	err = gz.Close()
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(context.TODO(), http.MethodPost, url, &reqBody)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept-Encoding", "gzip")
+	req.Header.Set("Content-Encoding", "gzip")
+	resp, err := ac.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}

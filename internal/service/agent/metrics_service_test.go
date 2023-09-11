@@ -48,7 +48,7 @@ func Test_agentService_UpdateMetrics(t *testing.T) {
 func TestReportMetrics_WhenClientRetunNoError(t *testing.T) {
 	c, mks := getAgentServiceMocks()
 
-	mks.client.On("ReportMetricsJSON", mock.Anything).Return(nil)
+	mks.client.On("ReportMetricsJSONBatch", mock.Anything).Return(nil)
 	c.ReportMetrics()
 }
 

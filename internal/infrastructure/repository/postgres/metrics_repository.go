@@ -27,7 +27,9 @@ func (pg *pgRepo) UpdateGauge(ctx context.Context, metric models.Metric) error {
 	query := `
 			INSERT INTO	praktikum.metrics (id, m_type, m_value)
 			VALUES ($1, $2, $3)
-			ON CONFLICT (id) DO UPDATE SET m_value = EXCLUDED.m_value`
+			ON CONFLICT (id) DO 
+			UPDATE SET 
+				m_value = EXCLUDED.m_value`
 
 	_, err := pg.db.ExecContext(ctx, query, metric.ID, metric.MType, metric.Value)
 	if err != nil {
@@ -41,7 +43,11 @@ func (pg *pgRepo) UpdateCounter(ctx context.Context, metric models.Metric) error
 	query := `
 			INSERT INTO	praktikum.metrics (id, m_type, m_delta)
 			VALUES ($1, $2, $3)
-			ON CONFLICT (id) DO UPDATE SET m_delta = EXCLUDED.m_delta`
+			ON CONFLICT (id) DO 
+			UPDATE SET 
+				m_delta = $3 + (SELECT m_delta
+					FROM praktikum.metrics
+					WHERE id = $1)`
 
 	_, err := pg.db.ExecContext(ctx, query, metric.ID, metric.MType, metric.Delta)
 	if err != nil {
@@ -98,4 +104,49 @@ func (pg *pgRepo) GetAll(ctx context.Context) ([]models.Metric, error) {
 	rows.Close()
 
 	return metrics, nil
+}
+
+func (pg *pgRepo) UpdateAll(ctx context.Context, metrics []models.Metric) error {
+	var errRollback error
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		errRollback = tx.Rollback()
+	}()
+
+	query := `
+			INSERT INTO	praktikum.metrics (id, m_type, m_value, m_delta)
+			VALUES ($1, $2, $3, $4)
+			ON CONFLICT (id) DO 
+			UPDATE SET 
+				m_value = EXCLUDED.m_value, 
+				m_delta = $4 + (SELECT m_delta
+				FROM praktikum.metrics
+				WHERE id = $1)`
+
+	stmt, err := tx.PrepareContext(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	for _, m := range metrics {
+		_, err := stmt.ExecContext(ctx,
+			m.ID,
+			m.MType,
+			m.Value,
+			m.Delta,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return errRollback
 }

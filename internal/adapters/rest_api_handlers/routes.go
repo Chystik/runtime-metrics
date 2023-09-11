@@ -20,4 +20,5 @@ func RegisterHandlers(router *chi.Mux, h adapters.MetricsHandlers, pg adapters.P
 		router.Get("/ping", pg.PingHandler)
 	}
 	router.Get("/", h.AllMetrics)
+	router.Post("/updates/", h.UpdateMetricsJSON)
 }

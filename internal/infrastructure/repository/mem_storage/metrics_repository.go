@@ -46,7 +46,7 @@ func (ms *MemStorage) UpdateCounter(ctx context.Context, metric models.Metric) e
 	if !ok {
 		ms.Data[metric.ID] = metric
 	} else {
-		m.Delta = metric.Delta
+		*m.Delta = *metric.Delta + *m.Delta
 		ms.Data[metric.ID] = m
 	}
 
@@ -71,4 +71,12 @@ func (ms *MemStorage) GetAll(ctx context.Context) ([]models.Metric, error) {
 	}
 
 	return metrics, nil
+}
+
+func (ms *MemStorage) UpdateAll(ctx context.Context, metrics []models.Metric) error {
+	for _, m := range metrics {
+		ms.Data[m.ID] = m
+	}
+
+	return nil
 }

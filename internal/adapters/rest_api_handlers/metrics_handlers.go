@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"sort"
@@ -171,7 +170,6 @@ func (mh *metricsHandlers) UpdateMetricJSON(w http.ResponseWriter, r *http.Reque
 
 	err = json.NewDecoder(r.Body).Decode(&metric)
 	if err != nil {
-		fmt.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -188,6 +186,41 @@ func (mh *metricsHandlers) UpdateMetricJSON(w http.ResponseWriter, r *http.Reque
 	}
 
 	err = json.NewEncoder(&buf).Encode(metric)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(buf.Bytes())
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func (mh *metricsHandlers) UpdateMetricsJSON(w http.ResponseWriter, r *http.Request) {
+	var (
+		metrics []models.Metric
+		actual  []models.Metric
+		buf     bytes.Buffer
+		err     error
+	)
+	ctx := context.Background()
+
+	err = json.NewDecoder(r.Body).Decode(&metrics)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = mh.metricsService.UpdateAll(ctx, metrics)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = json.NewEncoder(&buf).Encode(actual)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return

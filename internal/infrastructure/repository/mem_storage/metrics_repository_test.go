@@ -120,7 +120,7 @@ func Test_memStorage_UpdateCounter(t *testing.T) {
 			},
 			want: want{
 				metricName:  "test2",
-				metricValue: createDelta(10),
+				metricValue: createDelta(20),
 			},
 		},
 	}

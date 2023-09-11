@@ -83,7 +83,7 @@ func (as *agentService) UpdateMetrics() {
 }
 
 func (as *agentService) ReportMetrics() {
-	err := as.client.ReportMetricsJSON(as.cache)
+	err := as.client.ReportMetricsJSONBatch(as.cache)
 	if err != nil {
 		fmt.Println(err)
 	}

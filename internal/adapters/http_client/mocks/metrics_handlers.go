@@ -38,6 +38,11 @@ func (_m *MetricsHandlers) UpdateMetricJSON(w http.ResponseWriter, r *http.Reque
 	_m.Called(w, r)
 }
 
+// UpdateMetricsJSON provides a mock function with given fields: w, r
+func (_m *MetricsHandlers) UpdateMetricsJSON(w http.ResponseWriter, r *http.Request) {
+	_m.Called(w, r)
+}
+
 // NewMetricsHandlers creates a new instance of MetricsHandlers. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMetricsHandlers(t interface {

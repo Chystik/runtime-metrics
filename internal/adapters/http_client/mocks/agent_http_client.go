@@ -40,6 +40,20 @@ func (_m *AgentHTTPClient) ReportMetricsJSON(metrics map[string]models.Metric) e
 	return r0
 }
 
+// ReportMetricsJSONBatch provides a mock function with given fields: metrics
+func (_m *AgentHTTPClient) ReportMetricsJSONBatch(metrics map[string]models.Metric) error {
+	ret := _m.Called(metrics)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(map[string]models.Metric) error); ok {
+		r0 = rf(metrics)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewAgentHTTPClient creates a new instance of AgentHTTPClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewAgentHTTPClient(t interface {
