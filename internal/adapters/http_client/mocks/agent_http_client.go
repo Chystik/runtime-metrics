@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	models "github.com/Chystik/runtime-metrics/internal/models"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,13 +42,13 @@ func (_m *AgentHTTPClient) ReportMetricsJSON(metrics map[string]models.Metric) e
 	return r0
 }
 
-// ReportMetricsJSONBatch provides a mock function with given fields: metrics
-func (_m *AgentHTTPClient) ReportMetricsJSONBatch(metrics map[string]models.Metric) error {
-	ret := _m.Called(metrics)
+// ReportMetricsJSONBatch provides a mock function with given fields: ctx, metrics
+func (_m *AgentHTTPClient) ReportMetricsJSONBatch(ctx context.Context, metrics map[string]models.Metric) error {
+	ret := _m.Called(ctx, metrics)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(map[string]models.Metric) error); ok {
-		r0 = rf(metrics)
+	if rf, ok := ret.Get(0).(func(context.Context, map[string]models.Metric) error); ok {
+		r0 = rf(ctx, metrics)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -107,7 +107,7 @@ func (ac *agentHTTPClient) ReportMetricsJSON(metrics map[string]models.Metric) e
 	return nil
 }
 
-func (ac *agentHTTPClient) ReportMetricsJSONBatch(metrics map[string]models.Metric) error {
+func (ac *agentHTTPClient) ReportMetricsJSONBatch(ctx context.Context, metrics map[string]models.Metric) error {
 	var ms []models.Metric
 	var buf, reqBody bytes.Buffer
 
@@ -132,7 +132,7 @@ func (ac *agentHTTPClient) ReportMetricsJSONBatch(metrics map[string]models.Metr
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(context.TODO(), http.MethodPost, url, &reqBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, &reqBody)
 	if err != nil {
 		return err
 	}

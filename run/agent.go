@@ -1,8 +1,12 @@
 package run
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"net"
 	"os"
+	"syscall"
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
@@ -16,18 +20,39 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 	agentClient := agenthttpclient.New(client, cfg)
 	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
 
-	updateTicker := time.NewTicker(time.Duration(cfg.PollInterval))
-	reportTicker := time.NewTicker(time.Duration(cfg.ReportInterval))
+	p, r := time.Duration(cfg.PollInterval), time.Duration(cfg.ReportInterval)
+	triesCount, triesInterval := 3, 1
 
-	// waiting for the server to start
-	time.Sleep(2 * time.Second)
+	updateTimer := time.NewTimer(p)
+	reportTimer := time.NewTimer(r)
 
 	for {
 		select {
-		case <-updateTicker.C:
+		case <-updateTimer.C:
 			agentService.UpdateMetrics()
-		case <-reportTicker.C:
-			agentService.ReportMetrics()
+			updateTimer.Reset(p)
+		case <-reportTimer.C:
+			reportCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			err := agentService.ReportMetrics(reportCtx)
+			if err != nil {
+				if triesCount == 0 {
+					fmt.Println("cannot connect to the server. exit")
+					os.Exit(0)
+				}
+				var netOpErr *net.OpError
+				if errors.As(err, &netOpErr) && errors.Is(netOpErr, syscall.ECONNREFUSED) {
+					reportTimer.Reset(time.Duration(triesInterval * int(time.Second)))
+					fmt.Printf("cannot connect to the server. next try in %d seconds\n", triesInterval)
+					triesCount--
+					triesInterval = triesInterval + 2
+					cancel()
+					continue
+				}
+				fmt.Println(err)
+			}
+			reportTimer.Reset(r)
+			triesCount, triesInterval = 3, 1
+			cancel()
 		case <-quit:
 			fmt.Println("Interrupt signal. Shutdown")
 			os.Exit(0)

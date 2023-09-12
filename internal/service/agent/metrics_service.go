@@ -1,7 +1,7 @@
 package agentservice
 
 import (
-	"fmt"
+	"context"
 	"math/rand"
 	"reflect"
 	"runtime"
@@ -13,7 +13,7 @@ import (
 
 type AgentService interface {
 	UpdateMetrics()
-	ReportMetrics()
+	ReportMetrics(context.Context) error
 }
 
 type agentService struct {
@@ -82,9 +82,6 @@ func (as *agentService) UpdateMetrics() {
 
 }
 
-func (as *agentService) ReportMetrics() {
-	err := as.client.ReportMetricsJSONBatch(as.cache)
-	if err != nil {
-		fmt.Println(err)
-	}
+func (as *agentService) ReportMetrics(ctx context.Context) error {
+	return as.client.ReportMetricsJSONBatch(ctx, as.cache)
 }

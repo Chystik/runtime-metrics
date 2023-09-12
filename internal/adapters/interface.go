@@ -11,7 +11,7 @@ import (
 type AgentHTTPClient interface {
 	ReportMetrics(metrics map[string]interface{}) error
 	ReportMetricsJSON(metrics map[string]models.Metric) error
-	ReportMetricsJSONBatch(metrics map[string]models.Metric) error
+	ReportMetricsJSONBatch(ctx context.Context, metrics map[string]models.Metric) error
 }
 
 type MetricsHandlers interface {

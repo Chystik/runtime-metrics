@@ -52,7 +52,7 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 
 	if cfg.DBDsn != "" {
 		// postgres
-		pgClient, err = db.NewPgClient(cfg)
+		pgClient, err = db.NewPgClient(cfg, logger.Logger)
 		if err != nil {
 			logger.Fatal(err.Error())
 		}

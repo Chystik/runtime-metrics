@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
+	"go.uber.org/zap"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -20,17 +21,19 @@ import (
 )
 
 var (
-	connStr   = "host=%s port=%d user=%s password=%s sslmode=%s"
-	connStrDB = "host=%s port=%d user=%s password=%s dbname=%s sslmode=%s"
+	connStr            = "host=%s port=%d user=%s password=%s sslmode=%s"
+	connStrDB          = "host=%s port=%d user=%s password=%s dbname=%s sslmode=%s"
+	logDatabaseCreated = "database %s created"
 )
 
 type pgClient struct {
 	db *sqlx.DB
 	c  *pgx.ConnConfig
+	l  *zap.Logger
 }
 
 // opens a db and perform migrations
-func NewPgClient(cfg *config.ServerConfig) (*pgClient, error) {
+func NewPgClient(cfg *config.ServerConfig, logger *zap.Logger) (*pgClient, error) {
 	cc, err := pgx.ParseURI(cfg.DBDsn)
 	if err != nil {
 		return nil, err
@@ -44,6 +47,7 @@ func NewPgClient(cfg *config.ServerConfig) (*pgClient, error) {
 	return &pgClient{
 		db: db,
 		c:  &cc,
+		l:  logger,
 	}, nil
 }
 
@@ -58,6 +62,7 @@ func (pc *pgClient) Connect(ctx context.Context) (*sqlx.DB, error) {
 
 	pc.db, err = sqlx.ConnectContext(ctx, "pgx", fmt.Sprintf(connStr, pc.c.Host, pc.c.Port, pc.c.User, pc.c.Password, SSLmode))
 	if err != nil {
+		pc.l.Error(err.Error())
 		return nil, err
 	}
 
@@ -65,18 +70,17 @@ func (pc *pgClient) Connect(ctx context.Context) (*sqlx.DB, error) {
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if !errors.As(err, &pgErr) || pgerrcode.DuplicateDatabase != pgErr.Code {
+			pc.l.Error(err.Error())
 			return nil, err
 		}
-		/* pgEr, ok := err.(*pgconn.PgError)
-		if !ok { // not pgconn error
-			return nil, err
-		} else if pgEr.Code != "42P04" { // database <db_name> already exists (SQLSTATE 42P04)
-			return nil, err
-		} */
+		pc.l.Info(err.Error())
+	} else {
+		pc.l.Info(fmt.Sprintf(logDatabaseCreated, pc.c.Database))
 	}
 
 	pc.db, err = sqlx.ConnectContext(ctx, "pgx", fmt.Sprintf(connStrDB, pc.c.Host, pc.c.Port, pc.c.User, pc.c.Password, pc.c.Database, SSLmode))
 	if err != nil {
+		pc.l.Error(err.Error())
 		return nil, err
 	}
 
@@ -86,7 +90,7 @@ func (pc *pgClient) Connect(ctx context.Context) (*sqlx.DB, error) {
 func (pc *pgClient) Migrate() error {
 	d, err := postgres.WithInstance(pc.db.DB, &postgres.Config{})
 	if err != nil {
-		fmt.Println("1", err)
+		pc.l.Error(err.Error())
 		return err
 	}
 
@@ -94,12 +98,13 @@ func (pc *pgClient) Migrate() error {
 		"file://schema",
 		pc.c.Database, d)
 	if err != nil {
-		fmt.Println("2", err)
+		pc.l.Error(err.Error())
 		return err
 	}
 
 	err = m.Up()
 	if err != nil && err.Error() != "no change" {
+		pc.l.Error(err.Error())
 		return err
 	}
 
@@ -122,6 +127,7 @@ func (pc *pgClient) PingHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := pc.Ping(ctx)
 	if err != nil {
+		pc.l.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

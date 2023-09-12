@@ -1,6 +1,7 @@
 package agentservice
 
 import (
+	"context"
 	"runtime"
 	"testing"
 
@@ -48,8 +49,10 @@ func Test_agentService_UpdateMetrics(t *testing.T) {
 func TestReportMetrics_WhenClientRetunNoError(t *testing.T) {
 	c, mks := getAgentServiceMocks()
 
-	mks.client.On("ReportMetricsJSONBatch", mock.Anything).Return(nil)
-	c.ReportMetrics()
+	mks.client.On("ReportMetricsJSONBatch", mock.Anything, mock.Anything).Return(nil)
+	err := c.ReportMetrics(context.Background())
+
+	assert.NoError(t, err)
 }
 
 type agentServiceMocks struct {
