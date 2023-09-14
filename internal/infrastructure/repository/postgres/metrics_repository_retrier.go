@@ -27,7 +27,7 @@ func (pg *pgRepo) ExecContext(ctx context.Context, query string, args ...any) (s
 			}
 		}
 		if err != nil {
-			return nil, errConnection
+			return nil, err
 		}
 	}
 	return res, nil
@@ -49,7 +49,7 @@ func (pg *pgRepo) Begin() (*sql.Tx, error) {
 			}
 		}
 		if err != nil {
-			return nil, errConnection
+			return nil, err
 		}
 	}
 	return tx, nil
@@ -71,7 +71,7 @@ func (pg *pgRepo) GetContext(ctx context.Context, m *models.Metric, query string
 			}
 		}
 		if err != nil {
-			return errConnection
+			return err
 		}
 	}
 	return nil
@@ -93,7 +93,7 @@ func (pg *pgRepo) QueryContext(ctx context.Context, query string) (*sql.Rows, er
 			}
 		}
 		if err != nil {
-			return nil, errConnection
+			return nil, err
 		}
 	}
 	return r, nil

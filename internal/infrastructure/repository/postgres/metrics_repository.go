@@ -17,7 +17,6 @@ var (
 	deltaInterval = 2
 
 	ErrNotFoundMetric = errors.New("not found in repository")
-	errConnection     = errors.New("cannot connect to the db server. exit")
 
 	logRetryConnection = "cannot connect to the database server. next try in %d seconds\n"
 )
@@ -81,7 +80,6 @@ func (pg *pgRepo) Get(ctx context.Context, metric models.Metric) (models.Metric,
 	err := pg.GetContext(ctx, &m, query, metric.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			pg.l.Error(err.Error())
 			return m, ErrNotFoundMetric
 		}
 	}
