@@ -21,7 +21,12 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
 
 	p, r := time.Duration(cfg.PollInterval), time.Duration(cfg.ReportInterval)
-	triesCount, triesInterval := 3, 1
+
+	attempts := 3
+
+	// intervals in seconds
+	triesInterval := 1
+	deltaInterval := 2
 
 	updateTimer := time.NewTimer(p)
 	reportTimer := time.NewTimer(r)
@@ -32,30 +37,32 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 			agentService.UpdateMetrics()
 			updateTimer.Reset(p)
 		case <-reportTimer.C:
-			reportCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			err := agentService.ReportMetrics(reportCtx)
-			if err != nil {
-				if triesCount == 0 {
-					fmt.Println("cannot connect to the server. exit")
-					os.Exit(0)
-				}
-				var netOpErr *net.OpError
-				if errors.As(err, &netOpErr) && errors.Is(netOpErr, syscall.ECONNREFUSED) {
-					reportTimer.Reset(time.Duration(triesInterval * int(time.Second)))
-					fmt.Printf("cannot connect to the server. next try in %d seconds\n", triesInterval)
-					triesCount--
-					triesInterval = triesInterval + 2
-					cancel()
-					continue
-				}
-				fmt.Println(err)
-			}
+			reportMetricsRetrier(agentService, attempts, triesInterval, deltaInterval)
 			reportTimer.Reset(r)
-			triesCount, triesInterval = 3, 1
-			cancel()
 		case <-quit:
 			fmt.Println("Interrupt signal. Shutdown")
 			os.Exit(0)
 		}
+	}
+}
+
+func reportMetricsRetrier(as agentservice.AgentService, attempts, triesInterval, deltaInterval int) {
+	reportCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	err := as.ReportMetrics(reportCtx)
+	if err != nil {
+		if attempts <= 0 {
+			fmt.Println("cannot connect to the server. exit")
+			os.Exit(0)
+		}
+		var netOpErr *net.OpError
+		if errors.As(err, &netOpErr) && errors.Is(netOpErr, syscall.ECONNREFUSED) {
+			fmt.Printf("cannot connect to the server. next try in %d seconds\n", triesInterval)
+			time.Sleep(time.Duration(triesInterval) * time.Second)
+			reportMetricsRetrier(as, attempts-1, triesInterval+deltaInterval, deltaInterval)
+			return
+		}
+		fmt.Println(err)
 	}
 }

@@ -13,6 +13,10 @@ import (
 	"github.com/Chystik/runtime-metrics/internal/models"
 )
 
+var (
+	errBadStatusCode = "resp status code: %s"
+)
+
 type agentHTTPClient struct {
 	client  *http.Client
 	address string
@@ -145,6 +149,9 @@ func (ac *agentHTTPClient) ReportMetricsJSONBatch(ctx context.Context, metrics m
 		return err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf(errBadStatusCode, resp.Status)
+	}
 
 	return nil
 }

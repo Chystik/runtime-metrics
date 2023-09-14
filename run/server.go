@@ -70,7 +70,7 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 			logger.Fatal(err.Error())
 		}
 
-		meticsRepository = postgres.NewMetricsRepo(db)
+		meticsRepository = postgres.NewMetricsRepo(db, logger.Logger)
 	} else if cfg.FileStoragePath != "" {
 		// fs storage
 		localStorage, err := localfs.New(cfg, inMemRepo)
