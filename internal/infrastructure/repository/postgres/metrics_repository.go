@@ -106,14 +106,16 @@ func (pg *pgRepo) GetAll(ctx context.Context) ([]models.Metric, error) {
 	return metrics, nil
 }
 
-func (pg *pgRepo) UpdateAll(ctx context.Context, metrics []models.Metric) error {
-	var errRollback error
+func (pg *pgRepo) UpdateAll(ctx context.Context, metrics []models.Metric) (err error) {
 	tx, err := pg.db.Begin()
 	if err != nil {
 		return err
 	}
 	defer func() {
-		errRollback = tx.Rollback()
+		e := tx.Rollback()
+		if e.Error() != "sql: transaction has already been committed or rolled back" {
+			err = e
+		}
 	}()
 
 	query := `
@@ -132,7 +134,7 @@ func (pg *pgRepo) UpdateAll(ctx context.Context, metrics []models.Metric) error 
 	}
 
 	for _, m := range metrics {
-		_, err := stmt.ExecContext(ctx,
+		_, err = stmt.ExecContext(ctx,
 			m.ID,
 			m.MType,
 			m.Value,
@@ -148,5 +150,5 @@ func (pg *pgRepo) UpdateAll(ctx context.Context, metrics []models.Metric) error 
 		return err
 	}
 
-	return errRollback
+	return nil
 }
