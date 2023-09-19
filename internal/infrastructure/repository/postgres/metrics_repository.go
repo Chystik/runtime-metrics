@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"net"
+	"syscall"
+	"time"
 
 	"github.com/Chystik/runtime-metrics/internal/models"
 
@@ -34,6 +37,8 @@ func NewMetricsRepo(db *sqlx.DB, logger *zap.Logger) *pgRepo {
 }
 
 func (pg *pgRepo) UpdateGauge(ctx context.Context, metric models.Metric) error {
+	var err error
+
 	query := `
 			INSERT INTO	praktikum.metrics (id, m_type, m_value)
 			VALUES ($1, $2, $3)
@@ -41,7 +46,10 @@ func (pg *pgRepo) UpdateGauge(ctx context.Context, metric models.Metric) error {
 			UPDATE SET 
 				m_value = EXCLUDED.m_value`
 
-	_, err := pg.ExecContext(ctx, query, metric.ID, metric.MType, metric.Value)
+	doWithRetry(pg.l, func() error {
+		_, err = pg.db.ExecContext(ctx, query, metric.ID, metric.MType, metric.Value)
+		return err
+	})
 	if err != nil {
 		pg.l.Error(err.Error())
 		return err
@@ -51,6 +59,8 @@ func (pg *pgRepo) UpdateGauge(ctx context.Context, metric models.Metric) error {
 }
 
 func (pg *pgRepo) UpdateCounter(ctx context.Context, metric models.Metric) error {
+	var err error
+
 	query := `
 			INSERT INTO	praktikum.metrics (id, m_type, m_delta)
 			VALUES ($1, $2, $3)
@@ -60,7 +70,10 @@ func (pg *pgRepo) UpdateCounter(ctx context.Context, metric models.Metric) error
 					FROM praktikum.metrics
 					WHERE id = $1)`
 
-	_, err := pg.ExecContext(ctx, query, metric.ID, metric.MType, metric.Delta)
+	doWithRetry(pg.l, func() error {
+		_, err := pg.db.ExecContext(ctx, query, metric.ID, metric.MType, metric.Delta)
+		return err
+	})
 	if err != nil {
 		pg.l.Error(err.Error())
 		return err
@@ -71,13 +84,16 @@ func (pg *pgRepo) UpdateCounter(ctx context.Context, metric models.Metric) error
 
 func (pg *pgRepo) Get(ctx context.Context, metric models.Metric) (models.Metric, error) {
 	var m models.Metric
+	var err error
 
 	query := `
 			SELECT id, m_type, m_value, m_delta
 			FROM praktikum.metrics
 			WHERE id = $1`
 
-	err := pg.GetContext(ctx, &m, query, metric.ID)
+	doWithRetry(pg.l, func() error {
+		return pg.db.GetContext(ctx, &m, query, metric.ID)
+	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return m, ErrNotFoundMetric
@@ -89,12 +105,17 @@ func (pg *pgRepo) Get(ctx context.Context, metric models.Metric) (models.Metric,
 
 func (pg *pgRepo) GetAll(ctx context.Context) ([]models.Metric, error) {
 	var metrics []models.Metric
+	var rows *sql.Rows
+	var err error
 
 	query := `
 			SELECT id, m_type, m_value, m_delta
 			FROM praktikum.metrics`
 
-	rows, err := pg.QueryContext(ctx, query)
+	doWithRetry(pg.l, func() error {
+		rows, err = pg.db.QueryContext(ctx, query)
+		return err
+	})
 	if err != nil {
 		pg.l.Error(err.Error())
 		return nil, err
@@ -122,7 +143,12 @@ func (pg *pgRepo) GetAll(ctx context.Context) ([]models.Metric, error) {
 }
 
 func (pg *pgRepo) UpdateAll(ctx context.Context, metrics []models.Metric) (err error) {
-	tx, err := pg.Begin()
+	var tx *sql.Tx
+
+	doWithRetry(pg.l, func() error {
+		tx, err = pg.db.Begin()
+		return err
+	})
 	if err != nil {
 		pg.l.Error(err.Error())
 		return err
@@ -170,4 +196,22 @@ func (pg *pgRepo) UpdateAll(ctx context.Context, metrics []models.Metric) (err e
 	}
 
 	return nil
+}
+
+func doWithRetry(l *zap.Logger, retryableFunc func() error) {
+	err := retryableFunc()
+	if err != nil {
+		var netOpErr *net.OpError
+		if errors.As(err, &netOpErr) && errors.Is(netOpErr, syscall.ECONNREFUSED) {
+			a := attempts
+			ti := triesInterval
+			for a > 0 && err != nil {
+				l.Sugar().Infof(logRetryConnection, ti)
+				time.Sleep(time.Duration(ti) * time.Second)
+				err = retryableFunc()
+				a--
+				ti = ti + deltaInterval
+			}
+		}
+	}
 }
