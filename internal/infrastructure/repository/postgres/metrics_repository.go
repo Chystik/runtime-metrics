@@ -37,8 +37,6 @@ func NewMetricsRepo(db *sqlx.DB, logger *zap.Logger) *pgRepo {
 }
 
 func (pg *pgRepo) UpdateGauge(ctx context.Context, metric models.Metric) error {
-	var err error
-
 	query := `
 			INSERT INTO	praktikum.metrics (id, m_type, m_value)
 			VALUES ($1, $2, $3)
@@ -46,8 +44,8 @@ func (pg *pgRepo) UpdateGauge(ctx context.Context, metric models.Metric) error {
 			UPDATE SET 
 				m_value = EXCLUDED.m_value`
 
-	doWithRetry(pg.l, func() error {
-		_, err = pg.db.ExecContext(ctx, query, metric.ID, metric.MType, metric.Value)
+	err := doWithRetry(pg.l, func() error {
+		_, err := pg.db.ExecContext(ctx, query, metric.ID, metric.MType, metric.Value)
 		return err
 	})
 	if err != nil {
@@ -59,8 +57,6 @@ func (pg *pgRepo) UpdateGauge(ctx context.Context, metric models.Metric) error {
 }
 
 func (pg *pgRepo) UpdateCounter(ctx context.Context, metric models.Metric) error {
-	var err error
-
 	query := `
 			INSERT INTO	praktikum.metrics (id, m_type, m_delta)
 			VALUES ($1, $2, $3)
@@ -70,7 +66,7 @@ func (pg *pgRepo) UpdateCounter(ctx context.Context, metric models.Metric) error
 					FROM praktikum.metrics
 					WHERE id = $1)`
 
-	doWithRetry(pg.l, func() error {
+	err := doWithRetry(pg.l, func() error {
 		_, err := pg.db.ExecContext(ctx, query, metric.ID, metric.MType, metric.Delta)
 		return err
 	})
@@ -84,14 +80,13 @@ func (pg *pgRepo) UpdateCounter(ctx context.Context, metric models.Metric) error
 
 func (pg *pgRepo) Get(ctx context.Context, metric models.Metric) (models.Metric, error) {
 	var m models.Metric
-	var err error
 
 	query := `
 			SELECT id, m_type, m_value, m_delta
 			FROM praktikum.metrics
 			WHERE id = $1`
 
-	doWithRetry(pg.l, func() error {
+	err := doWithRetry(pg.l, func() error {
 		return pg.db.GetContext(ctx, &m, query, metric.ID)
 	})
 	if err != nil {
@@ -112,8 +107,11 @@ func (pg *pgRepo) GetAll(ctx context.Context) ([]models.Metric, error) {
 			SELECT id, m_type, m_value, m_delta
 			FROM praktikum.metrics`
 
-	doWithRetry(pg.l, func() error {
+	err = doWithRetry(pg.l, func() error {
 		rows, err = pg.db.QueryContext(ctx, query)
+		if rows.Err() != nil { // statictest rows.Err must be checked
+			return err
+		}
 		return err
 	})
 	if err != nil {
@@ -145,7 +143,7 @@ func (pg *pgRepo) GetAll(ctx context.Context) ([]models.Metric, error) {
 func (pg *pgRepo) UpdateAll(ctx context.Context, metrics []models.Metric) (err error) {
 	var tx *sql.Tx
 
-	doWithRetry(pg.l, func() error {
+	err = doWithRetry(pg.l, func() error {
 		tx, err = pg.db.Begin()
 		return err
 	})
@@ -198,7 +196,7 @@ func (pg *pgRepo) UpdateAll(ctx context.Context, metrics []models.Metric) (err e
 	return nil
 }
 
-func doWithRetry(l *zap.Logger, retryableFunc func() error) {
+func doWithRetry(l *zap.Logger, retryableFunc func() error) error {
 	err := retryableFunc()
 	if err != nil {
 		var netOpErr *net.OpError
@@ -214,4 +212,5 @@ func doWithRetry(l *zap.Logger, retryableFunc func() error) {
 			}
 		}
 	}
+	return err
 }

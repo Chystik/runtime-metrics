@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-.PHONY: test-one test-all dep test race lint gen cover
+.PHONY: test-one test-all dep test race lint gen cover statictest
 
 dep:
 	go mod download
@@ -30,7 +30,7 @@ test-one:
 	rm $(agent-bin) $(server-bin)
 
 # use: make test-all iter=9
-ifeq ($(shell test $(iter) -gt 9; echo $$?),0)
+ifeq ($(shell test $(iter) > 9; echo $$?),0)
  $(eval t := $$$(iter))
  r := $(subst $(iter),,$(t))
  reg='([1-9]|1[0-$(r)])[A-B]*'
@@ -57,3 +57,6 @@ cover:
 	go test -short -count=1 -race -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o=coverage.html
 	rm coverage.out
+
+statictest:
+	go vet -vettool=statictest ./...
