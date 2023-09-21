@@ -37,7 +37,7 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 			agentService.UpdateMetrics()
 			updateTimer.Reset(p)
 		case <-reportTimer.C:
-			reportMetricsRetrier(agentService, attempts, triesInterval, deltaInterval)
+			reportMetricsRetryer(agentService, attempts, triesInterval, deltaInterval)
 			reportTimer.Reset(r)
 		case <-quit:
 			fmt.Println("Interrupt signal. Shutdown")
@@ -46,7 +46,7 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 	}
 }
 
-func reportMetricsRetrier(as agentservice.AgentService, attempts, triesInterval, deltaInterval int) {
+func reportMetricsRetryer(as agentservice.AgentService, attempts, triesInterval, deltaInterval int) {
 	reportCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -60,7 +60,7 @@ func reportMetricsRetrier(as agentservice.AgentService, attempts, triesInterval,
 		if errors.As(err, &netOpErr) && errors.Is(netOpErr, syscall.ECONNREFUSED) {
 			fmt.Printf("cannot connect to the server. next try in %d seconds\n", triesInterval)
 			time.Sleep(time.Duration(triesInterval) * time.Second)
-			reportMetricsRetrier(as, attempts-1, triesInterval+deltaInterval, deltaInterval)
+			reportMetricsRetryer(as, attempts-1, triesInterval+deltaInterval, deltaInterval)
 			return
 		}
 		fmt.Println(err)
