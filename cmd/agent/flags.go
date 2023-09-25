@@ -15,5 +15,6 @@ func parseFlags(cfg *config.AgentConfig) {
 	flag.Var(cfg, "a", "Net address host:port")
 	flag.Var(&cfg.PollInterval, "p", "Poll interval in seconds")
 	flag.Var(&cfg.ReportInterval, "r", "Report interval in seconds")
+	flag.StringVar(&cfg.SHAkey, "k", "", "sha key")
 	flag.Parse()
 }

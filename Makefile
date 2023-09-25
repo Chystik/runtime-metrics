@@ -26,6 +26,7 @@ test-one:
 	-binary-path=$(server-bin) \
 	-server-port=8080 -source-path=. \
 	-file-storage-path=./data.json \
+	-key="ssss" \
 	-database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
 	rm $(agent-bin) $(server-bin)
 
@@ -47,6 +48,7 @@ test-all:
 	-server-port=8080 \
 	-source-path=. \
 	-file-storage-path=./data.json \
+	-key="ssss" \
 	-database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
 	rm $(agent-bin) $(server-bin)
 

@@ -13,6 +13,7 @@ import (
 	"github.com/Chystik/runtime-metrics/internal/adapters/db"
 	handlers "github.com/Chystik/runtime-metrics/internal/adapters/rest_api_handlers"
 	"github.com/Chystik/runtime-metrics/internal/compressor"
+	"github.com/Chystik/runtime-metrics/internal/hasher"
 	memstorage "github.com/Chystik/runtime-metrics/internal/infrastructure/repository/mem_storage"
 	"github.com/Chystik/runtime-metrics/internal/infrastructure/repository/postgres"
 	localfs "github.com/Chystik/runtime-metrics/internal/infrastructure/storage/local"
@@ -98,9 +99,13 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	// services
 	metricsService := metricsservice.New(meticsRepository)
 
+	// hasher
+	h := hasher.NewHasher(cfg.SHAkey, "HashSHA256")
+
 	// router
 	router := chi.NewRouter()
 	router.Use(logger.WithLogging)
+	router.Use(h.WithHasher)
 	router.Use(compressor.GzipMiddleware)
 	router.Use(middleware.Recoverer)
 

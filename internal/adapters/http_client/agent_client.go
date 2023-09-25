@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,12 +23,14 @@ var (
 type agentHTTPClient struct {
 	client  *http.Client
 	address string
+	shaKey  string
 }
 
 func New(c *http.Client, s *config.AgentConfig) *agentHTTPClient {
 	return &agentHTTPClient{
 		client:  c,
 		address: s.Address,
+		shaKey:  s.SHAkey,
 	}
 }
 
@@ -141,6 +146,18 @@ func (ac *agentHTTPClient) ReportMetricsJSONBatch(ctx context.Context, metrics m
 		return err
 	}
 
+	if ac.shaKey != "" {
+		h := hmac.New(sha256.New, []byte(ac.shaKey))
+		_, err = h.Write(reqBody.Bytes())
+		if err != nil {
+			return err
+		}
+
+		sign := h.Sum(nil)
+		hVal := base64.StdEncoding.EncodeToString(sign)
+		req.Header.Set("HashSHA256", hVal)
+	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept-Encoding", "gzip")
 	req.Header.Set("Content-Encoding", "gzip")
@@ -149,6 +166,7 @@ func (ac *agentHTTPClient) ReportMetricsJSONBatch(ctx context.Context, metrics m
 		return err
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf(errBadStatusCode, resp.Status)
 	}

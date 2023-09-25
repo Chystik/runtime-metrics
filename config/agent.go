@@ -13,6 +13,7 @@ type (
 		Address        string `env:"ADDRESS"`
 		PollInterval   `env:"POLL_INTERVAL"`
 		ReportInterval `env:"REPORT_INTERVAL"`
+		SHAkey         string `env:"KEY"`
 		CollectableMetrics
 	}
 

@@ -100,7 +100,7 @@ func (pg *pgRepo) Get(ctx context.Context, metric models.Metric) (models.Metric,
 
 func (pg *pgRepo) GetAll(ctx context.Context) ([]models.Metric, error) {
 	var metrics []models.Metric
-	var rows *sql.Rows
+	//var rows *sql.Rows
 	var err error
 
 	query := `
@@ -108,18 +108,20 @@ func (pg *pgRepo) GetAll(ctx context.Context) ([]models.Metric, error) {
 			FROM praktikum.metrics`
 
 	err = doWithRetry(pg.l, func() error {
-		rows, err = pg.db.QueryContext(ctx, query)
+		err = pg.db.SelectContext(ctx, &metrics, query)
+		return err
+		/* rows, err = pg.db.QueryContext(ctx, query)
 		if rows.Err() != nil { // statictest rows.Err must be checked
 			return err
 		}
-		return err
+		return err */
 	})
 	if err != nil {
 		pg.l.Error(err.Error())
 		return nil, err
 	}
 
-	for rows.Next() {
+	/* for rows.Next() {
 		var m models.Metric
 
 		err = rows.Scan(&m.ID, &m.MType, &m.Value, &m.Delta)
@@ -135,7 +137,7 @@ func (pg *pgRepo) GetAll(ctx context.Context) ([]models.Metric, error) {
 		pg.l.Error(err.Error())
 		return nil, err
 	}
-	rows.Close()
+	rows.Close() */
 
 	return metrics, nil
 }
