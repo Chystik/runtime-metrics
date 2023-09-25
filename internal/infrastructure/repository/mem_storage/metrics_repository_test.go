@@ -1,6 +1,7 @@
 package memstorage
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -66,7 +67,7 @@ func Test_memStorage_UpdateGauge(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.ms.UpdateGauge(tt.args.metric)
+			_ = tt.ms.UpdateGauge(context.Background(), tt.args.metric)
 			have, ok := tt.ms.Data[tt.args.metric.ID]
 
 			assert.True(t, ok)
@@ -119,13 +120,13 @@ func Test_memStorage_UpdateCounter(t *testing.T) {
 			},
 			want: want{
 				metricName:  "test2",
-				metricValue: createDelta(10),
+				metricValue: createDelta(20),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.ms.UpdateCounter(tt.args.metric)
+			_ = tt.ms.UpdateCounter(context.Background(), tt.args.metric)
 
 			have, ok := tt.ms.Data[tt.args.metric.ID]
 
@@ -180,7 +181,7 @@ func Test_memStorage_GetDelta(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.ms.Get(models.Metric{ID: tt.args.name, MType: tt.args.mType})
+			got, err := tt.ms.Get(context.Background(), models.Metric{ID: tt.args.name, MType: tt.args.mType})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MemStorage.Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -228,7 +229,9 @@ func Test_memStorage_GetAll(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.ms.GetAll(); !reflect.DeepEqual(got, tt.want) {
+
+			got, _ := tt.ms.GetAll(context.Background())
+			if !reflect.DeepEqual(got, tt.want) {
 				reflect.DeepEqual(got, tt.want)
 			}
 		})

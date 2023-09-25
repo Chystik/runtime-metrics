@@ -1,12 +1,13 @@
 package agentservice
 
 import (
+	"context"
 	"runtime"
 	"testing"
 
 	"github.com/Chystik/runtime-metrics/config"
 	"github.com/Chystik/runtime-metrics/internal/adapters"
-	"github.com/Chystik/runtime-metrics/internal/adapters/agent_http_client/mocks"
+	"github.com/Chystik/runtime-metrics/internal/adapters/http_client/mocks"
 	"github.com/Chystik/runtime-metrics/internal/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -48,8 +49,10 @@ func Test_agentService_UpdateMetrics(t *testing.T) {
 func TestReportMetrics_WhenClientRetunNoError(t *testing.T) {
 	c, mks := getAgentServiceMocks()
 
-	mks.client.On("ReportMetricsJSON", mock.Anything).Return(nil)
-	c.ReportMetrics()
+	mks.client.On("ReportMetricsJSONBatch", mock.Anything, mock.Anything).Return(nil)
+	err := c.ReportMetrics(context.Background())
+
+	assert.NoError(t, err)
 }
 
 type agentServiceMocks struct {

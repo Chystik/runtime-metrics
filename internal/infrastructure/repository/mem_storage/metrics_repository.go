@@ -1,6 +1,7 @@
 package memstorage
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -22,7 +23,7 @@ func New(cfg *config.ServerConfig) *MemStorage {
 	return &MemStorage{Data: make(map[string]models.Metric)}
 }
 
-func (ms *MemStorage) UpdateGauge(metric models.Metric) {
+func (ms *MemStorage) UpdateGauge(ctx context.Context, metric models.Metric) error {
 	ms.Mu.Lock()
 	defer ms.Mu.Unlock()
 
@@ -33,9 +34,11 @@ func (ms *MemStorage) UpdateGauge(metric models.Metric) {
 		m.Value = metric.Value
 		ms.Data[metric.ID] = m
 	}
+
+	return nil
 }
 
-func (ms *MemStorage) UpdateCounter(metric models.Metric) {
+func (ms *MemStorage) UpdateCounter(ctx context.Context, metric models.Metric) error {
 	ms.Mu.Lock()
 	defer ms.Mu.Unlock()
 
@@ -43,12 +46,14 @@ func (ms *MemStorage) UpdateCounter(metric models.Metric) {
 	if !ok {
 		ms.Data[metric.ID] = metric
 	} else {
-		m.Delta = metric.Delta
+		*m.Delta = *metric.Delta + *m.Delta
 		ms.Data[metric.ID] = m
 	}
+
+	return nil
 }
 
-func (ms *MemStorage) Get(metric models.Metric) (models.Metric, error) {
+func (ms *MemStorage) Get(ctx context.Context, metric models.Metric) (models.Metric, error) {
 	m, ok := ms.Data[metric.ID]
 	if !ok {
 		return models.Metric{ID: metric.ID, MType: "", Delta: nil, Value: nil}, fmt.Errorf("metric with ID %s %w", metric.ID, ErrNotFoundMetric)
@@ -57,7 +62,7 @@ func (ms *MemStorage) Get(metric models.Metric) (models.Metric, error) {
 	return m, nil
 }
 
-func (ms *MemStorage) GetAll() []models.Metric {
+func (ms *MemStorage) GetAll(ctx context.Context) ([]models.Metric, error) {
 	var metrics []models.Metric
 
 	for _, v := range ms.Data {
@@ -65,5 +70,13 @@ func (ms *MemStorage) GetAll() []models.Metric {
 		metrics = append(metrics, m)
 	}
 
-	return metrics
+	return metrics, nil
+}
+
+func (ms *MemStorage) UpdateAll(ctx context.Context, metrics []models.Metric) error {
+	for _, m := range metrics {
+		ms.Data[m.ID] = m
+	}
+
+	return nil
 }

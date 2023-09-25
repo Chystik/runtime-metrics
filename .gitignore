@@ -26,5 +26,6 @@ vendor/
 
 # other
 metricstest
+statictest
 data.json
 server.log

@@ -15,6 +15,7 @@ type (
 		StoreInterval   `env:"STORE_INTERVAL"`
 		FileStoragePath string `env:"FILE_STORAGE_PATH"`
 		Restore         bool   `env:"RESTORE"`
+		DBDsn           string `env:"DATABASE_DSN"`
 	}
 
 	StoreInterval time.Duration

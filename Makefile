@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-.PHONY: test-one test-all dep test race lint gen cover
+.PHONY: test-one test-all dep test race lint gen cover statictest
 
 dep:
 	go mod download
@@ -25,11 +25,12 @@ test-one:
 	-agent-binary-path=$(agent-bin) \
 	-binary-path=$(server-bin) \
 	-server-port=8080 -source-path=. \
-	-file-storage-path=./data.json
+	-file-storage-path=./data.json \
+	-database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
 	rm $(agent-bin) $(server-bin)
 
 # use: make test-all iter=9
-ifeq ($(shell test $(iter) -gt 9; echo $$?),0)
+ifeq ($(shell test $(iter) > 9; echo $$?),0)
  $(eval t := $$$(iter))
  r := $(subst $(iter),,$(t))
  reg='([1-9]|1[0-$(r)])[A-B]*'
@@ -45,7 +46,8 @@ test-all:
 	-binary-path=$(server-bin) \
 	-server-port=8080 \
 	-source-path=. \
-	-file-storage-path=./data.json
+	-file-storage-path=./data.json \
+	-database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
 	rm $(agent-bin) $(server-bin)
 
 gen:
@@ -55,3 +57,6 @@ cover:
 	go test -short -count=1 -race -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o=coverage.html
 	rm coverage.out
+
+statictest:
+	go vet -vettool=statictest ./...

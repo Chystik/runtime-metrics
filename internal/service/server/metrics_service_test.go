@@ -1,6 +1,7 @@
 package metricsservice
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -41,8 +42,9 @@ func Test_metricsService_UpdateGauge(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mks.repo.On("UpdateGauge", tt.args.metric).Return()
-			tt.ss.UpdateGauge(tt.args.metric)
+			mks.repo.On("UpdateGauge", mock.Anything, tt.args.metric).Return(nil)
+			err := tt.ss.UpdateGauge(context.Background(), tt.args.metric)
+			assert.NoError(t, err)
 		})
 	}
 }
@@ -58,10 +60,11 @@ func TestUpdateCounter_WhenRepoReturnsResult(t *testing.T) {
 	expMetric := metric
 	*expMetric.Delta += 1
 
-	mks.repo.On("Get", mock.Anything).Return(metric, nil)
-	mks.repo.On("UpdateCounter", mock.Anything).Return()
+	mks.repo.On("Get", mock.Anything, mock.Anything).Return(metric, nil)
+	mks.repo.On("UpdateCounter", mock.Anything, mock.Anything).Return(nil)
 
-	service.UpdateCounter(expMetric)
+	err := service.UpdateCounter(context.Background(), expMetric)
+	assert.NoError(t, err)
 }
 
 func TestGetMetric_WhenRepoReturnResult(t *testing.T) {
@@ -75,8 +78,8 @@ func TestGetMetric_WhenRepoReturnResult(t *testing.T) {
 		Delta: createDelta(2),
 	}
 
-	repoMock.On("Get", mock.Anything).Return(expected, nil)
-	actual, actualErr := service.GetMetric(expected)
+	repoMock.On("Get", mock.Anything, mock.Anything).Return(expected, nil)
+	actual, actualErr := service.GetMetric(context.Background(), expected)
 
 	assert.NoError(t, actualErr)
 	assert.Equal(t, expected, actual)
@@ -90,8 +93,8 @@ func TestGetMetric_WhenRepoReturnError(t *testing.T) {
 	expected := models.Metric{}
 	expError := errors.New("some error")
 
-	repoMock.On("Get", mock.Anything).Return(expected, expError)
-	actual, actualErr := service.GetMetric(models.Metric{ID: "some name"})
+	repoMock.On("Get", mock.Anything, mock.Anything).Return(expected, expError)
+	actual, actualErr := service.GetMetric(context.Background(), models.Metric{ID: "some name"})
 
 	assert.ErrorIs(t, expError, actualErr)
 	assert.Equal(t, expected, actual)
@@ -104,9 +107,10 @@ func TestGetAllMetrics(t *testing.T) {
 
 	expected := []models.Metric{}
 
-	repoMock.On("GetAll", mock.Anything).Return(expected)
-	actual := service.GetAllMetrics()
+	repoMock.On("GetAll", mock.Anything, mock.Anything).Return(expected, nil)
+	actual, err := service.GetAllMetrics(context.Background())
 
+	assert.NoError(t, err)
 	assert.Equal(t, expected, actual)
 }
 

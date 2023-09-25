@@ -2,6 +2,7 @@ package syncer
 
 import (
 	"context"
+	"errors"
 	"io"
 	"sync"
 	"time"
@@ -21,38 +22,61 @@ type syncer struct {
 	i    time.Duration
 }
 
-func New(cfg *config.ServerConfig, src metricsservice.MetricsRepository, dst storage.MetricsStorage) (*syncer, error) {
-	s := &syncer{}
+func New(cfg *config.ServerConfig) *syncer {
+	return &syncer{
+		tick: make(chan struct{}, 1),
+		i:    time.Duration(cfg.StoreInterval),
+	}
+}
+
+func (s *syncer) Initialize(cfg *config.ServerConfig, src metricsservice.MetricsRepository, dst storage.MetricsStorage) error {
 	s.src = src
 	s.dst = dst
-	s.i = time.Duration(cfg.StoreInterval)
-	s.tick = make(chan struct{}, 1)
 
 	if cfg.Restore {
 		err := s.dst.Read()
-		if err != nil && err != io.EOF {
-			return nil, err
+		if err != nil && !errors.Is(err, io.EOF) {
+			return err
 		}
 	}
-
-	return s, nil
+	return nil
 }
 
-func (s *syncer) UpdateGauge(metric models.Metric) {
-	s.src.UpdateGauge(metric)
+func (s *syncer) UpdateGauge(ctx context.Context, metric models.Metric) error {
+	err := s.src.UpdateGauge(ctx, metric)
+	if err != nil {
+		return err
+	}
+
 	s.sync()
+	return nil
 }
-func (s *syncer) UpdateCounter(metric models.Metric) {
-	s.src.UpdateCounter(metric)
+func (s *syncer) UpdateCounter(ctx context.Context, metric models.Metric) error {
+	err := s.src.UpdateCounter(ctx, metric)
+	if err != nil {
+		return err
+	}
+
 	s.sync()
+	return nil
 }
 
-func (s *syncer) Get(metric models.Metric) (models.Metric, error) {
-	return s.src.Get(metric)
+func (s *syncer) Get(ctx context.Context, metric models.Metric) (models.Metric, error) {
+	return s.src.Get(ctx, metric)
 }
 
-func (s *syncer) GetAll() []models.Metric {
-	return s.src.GetAll()
+func (s *syncer) GetAll(ctx context.Context) ([]models.Metric, error) {
+	return s.src.GetAll(ctx)
+}
+
+func (s *syncer) UpdateAll(ctx context.Context, metrics []models.Metric) error {
+	err := s.src.UpdateAll(ctx, metrics)
+	if err != nil {
+		return nil
+	}
+
+	s.sync()
+	return nil
 }
 
 func (s *syncer) Shutdown(ctx context.Context) error {

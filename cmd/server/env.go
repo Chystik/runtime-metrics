@@ -16,11 +16,9 @@ func parseEnv(cfg *config.ServerConfig) error {
 	if osEnv := os.Getenv("ENVIRONMENT"); osEnv != "" {
 		switch osEnv {
 		case "dev":
-			envFile = "server_dev.env"
+			envFile = ".env.dev"
 		case "prod":
-			envFile = "server_prod.env"
-		case "stage":
-			envFile = "server_stage.env"
+			envFile = ".env"
 		}
 
 		err = godotenv.Load(envFile)

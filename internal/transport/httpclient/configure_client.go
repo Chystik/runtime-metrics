@@ -9,6 +9,6 @@ import (
 
 func NewHTTPClient(cfg *config.AgentConfig) *http.Client {
 	return &http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 20 * time.Second,
 	}
 }

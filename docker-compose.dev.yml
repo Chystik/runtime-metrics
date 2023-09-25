@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  db:
+    container_name: ${APP_NAME}-db-dev
+    image: postgres:14.4-alpine
+    hostname: ${DB_PG_ENDPOINT}
+    environment:
+      - POSTGRES_PASSWORD=${DB_PG_PASSWORD}
+      - POSTGRES_USER=${DB_PG_USER}
+    # volumes:
+    #   - pg:/var/lib/postgresql/data
+    ports:
+      - ${HOST}:${DB_PG_PORT}:${DB_PG_PORT}
+    restart: unless-stopped
+    networks:
+      - db
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  adminer:
+    image: adminer
+    restart: always
+    depends_on:
+      - db
+    networks:
+      - db
+    ports:
+      - ${HOST}:8880:8080
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: ${APP_NAME}-pgadmin
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=dev@dev.dev
+      - PGADMIN_DEFAULT_PASSWORD=dev
+    depends_on:
+      - db
+    networks:
+      - db
+    ports:
+      - ${HOST}:8888:80
+
+networks:
+  db:
+
+volumes:
+  pg:
+    name: ${APP_NAME}-pg
