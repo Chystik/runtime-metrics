@@ -16,7 +16,7 @@ var (
 
 type MemStorage struct {
 	Data map[string]models.Metric
-	Mu   sync.Mutex
+	Mu   sync.RWMutex
 }
 
 func New(cfg *config.ServerConfig) *MemStorage {
@@ -54,6 +54,9 @@ func (ms *MemStorage) UpdateCounter(ctx context.Context, metric models.Metric) e
 }
 
 func (ms *MemStorage) Get(ctx context.Context, metric models.Metric) (models.Metric, error) {
+	ms.Mu.RLock()
+	defer ms.Mu.RUnlock()
+
 	m, ok := ms.Data[metric.ID]
 	if !ok {
 		return models.Metric{ID: metric.ID, MType: "", Delta: nil, Value: nil}, fmt.Errorf("metric with ID %s %w", metric.ID, ErrNotFoundMetric)
@@ -66,7 +69,9 @@ func (ms *MemStorage) GetAll(ctx context.Context) ([]models.Metric, error) {
 	var metrics []models.Metric
 
 	for _, v := range ms.Data {
+		ms.Mu.RLock()
 		m := v
+		ms.Mu.RUnlock()
 		metrics = append(metrics, m)
 	}
 
@@ -75,7 +80,9 @@ func (ms *MemStorage) GetAll(ctx context.Context) ([]models.Metric, error) {
 
 func (ms *MemStorage) UpdateAll(ctx context.Context, metrics []models.Metric) error {
 	for _, m := range metrics {
+		ms.Mu.Lock()
 		ms.Data[m.ID] = m
+		ms.Mu.Unlock()
 	}
 
 	return nil

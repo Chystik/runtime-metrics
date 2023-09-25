@@ -38,8 +38,8 @@ func New(cfg *config.ServerConfig, inMemRepo *memstorage.MemStorage) (*localStor
 }
 
 func (ls *localStorage) Read() error {
-	ls.inMemRepo.Mu.Lock()
-	defer ls.inMemRepo.Mu.Unlock()
+	ls.inMemRepo.Mu.RLock()
+	defer ls.inMemRepo.Mu.RUnlock()
 
 	return ls.decoder.Decode(&ls.inMemRepo.Data)
 }
