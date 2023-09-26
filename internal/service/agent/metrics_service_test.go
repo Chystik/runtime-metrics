@@ -2,13 +2,11 @@ package agentservice
 
 import (
 	"context"
-	"runtime"
 	"testing"
 
 	"github.com/Chystik/runtime-metrics/config"
 	"github.com/Chystik/runtime-metrics/internal/adapters"
 	"github.com/Chystik/runtime-metrics/internal/adapters/http_client/mocks"
-	"github.com/Chystik/runtime-metrics/internal/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -23,8 +21,8 @@ func Test_New(t *testing.T) {
 }
 
 func Test_agentService_UpdateMetrics(t *testing.T) {
-	cache := make(map[string]models.Metric)
-	cache["PollCount"] = models.Metric{ID: "PollCount", MType: "counter", Delta: new(int64)}
+	collectableMetrics := []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "NumGC"}
+	as := New(nil, collectableMetrics)
 
 	tests := []struct {
 		name string
@@ -32,16 +30,17 @@ func Test_agentService_UpdateMetrics(t *testing.T) {
 	}{
 		{
 			name: "get metrics",
-			as: &agentService{
-				collectableMetrics: []string{"Alloc", "BuckHashSys", "Frees"},
-				runtimeMetrics:     runtime.MemStats{},
-				cache:              cache,
-			},
+			as:   as,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.as.UpdateMetrics()
+		})
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.as.UpdateGoPsUtilMetrics()
 		})
 	}
 }

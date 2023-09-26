@@ -14,6 +14,7 @@ type (
 		PollInterval   `env:"POLL_INTERVAL"`
 		ReportInterval `env:"REPORT_INTERVAL"`
 		SHAkey         string `env:"KEY"`
+		RateLimit      int    `env:"RATE_LIMIT"`
 		CollectableMetrics
 	}
 
