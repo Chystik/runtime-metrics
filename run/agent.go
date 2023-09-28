@@ -11,12 +11,14 @@ import (
 
 	"github.com/Chystik/runtime-metrics/config"
 	agenthttpclient "github.com/Chystik/runtime-metrics/internal/adapters/http_client"
+	"github.com/Chystik/runtime-metrics/internal/logger"
 	agentservice "github.com/Chystik/runtime-metrics/internal/service/agent"
 	"github.com/Chystik/runtime-metrics/internal/transport/httpclient"
+	"go.uber.org/zap"
 )
 
 var (
-	errConnNextTry = "cannot connect to the server. next try in %d seconds\n"
+	errConnNextTry = "cannot connect to the server. next try in %d seconds"
 	errConnExit    = "cannot connect to the server: %v. exit"
 )
 
@@ -28,6 +30,11 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 	client := httpclient.NewHTTPClient(cfg)
 	agentClient := agenthttpclient.New(client, cfg)
 	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
+
+	logger, err := logger.Initialize("info", "./agent.log")
+	if err != nil {
+		panic(err)
+	}
 
 	p, r := time.Duration(cfg.PollInterval), time.Duration(cfg.ReportInterval)
 
@@ -45,9 +52,17 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 	jobs := make(chan struct{}, numJobs)
 	results := make(chan jobResult, numJobs)
 
+	logger.Info(
+		"agent started",
+		zap.String("Address", cfg.Address),
+		zap.Duration("Poll interval", time.Duration(cfg.PollInterval)),
+		zap.Duration("Report interval", time.Duration(cfg.ReportInterval)),
+		zap.Int("Rate limit", cfg.RateLimit),
+	)
+
 	// init and run N workers, where N = RATE_LIMIT
 	for w := 0; w < numJobs; w++ {
-		go worker(agentService, attempts, triesInterval, deltaInterval, jobs, results)
+		go worker(agentService, attempts, triesInterval, deltaInterval, jobs, results, logger.Logger)
 	}
 
 	go func() {
@@ -57,9 +72,11 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 				go agentService.UpdateMetrics()
 				go agentService.UpdateGoPsUtilMetrics()
 			case <-reportTicker.C:
-				jobs <- struct{}{}
+				go func() {
+					jobs <- struct{}{}
+				}()
 			case <-quit:
-				fmt.Println("Interrupt signal. Shutdown")
+				logger.Info("Interrupt signal. Shutdown")
 				close(jobs)
 				close(results)
 				os.Exit(0)
@@ -69,20 +86,19 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 
 	for r := range results {
 		if r.err != nil {
-			fmt.Println(r.err)
-			os.Exit(0)
+			logger.Error(r.err.Error())
 		}
 	}
 }
 
-func worker(as agentservice.AgentService, attempts, triesInterval, deltaInterval int, jobs chan struct{}, results chan jobResult) {
+func worker(as agentservice.AgentService, attempts, triesInterval, deltaInterval int, jobs chan struct{}, results chan jobResult, l *zap.Logger) {
 	for range jobs {
-		err := reportMetricsRetryer(as, attempts, triesInterval, deltaInterval)
+		err := reportMetricsRetryer(as, attempts, triesInterval, deltaInterval, l)
 		results <- jobResult{err: err}
 	}
 }
 
-func reportMetricsRetryer(as agentservice.AgentService, attempts, triesInterval, deltaInterval int) error {
+func reportMetricsRetryer(as agentservice.AgentService, attempts, triesInterval, deltaInterval int, l *zap.Logger) error {
 	reportCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -93,7 +109,7 @@ func reportMetricsRetryer(as agentservice.AgentService, attempts, triesInterval,
 			a := attempts
 			ti := triesInterval
 			for a > 0 && err != nil {
-				fmt.Printf(errConnNextTry, ti)
+				l.Info(fmt.Sprintf(errConnNextTry, ti))
 				time.Sleep(time.Duration(ti) * time.Second)
 				err = as.ReportMetrics(reportCtx)
 				a--
