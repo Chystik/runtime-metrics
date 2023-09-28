@@ -18,6 +18,7 @@ import (
 	"github.com/Chystik/runtime-metrics/internal/infrastructure/repository/postgres"
 	localfs "github.com/Chystik/runtime-metrics/internal/infrastructure/storage/local"
 	"github.com/Chystik/runtime-metrics/internal/logger"
+	"github.com/Chystik/runtime-metrics/internal/retryer"
 	metricsservice "github.com/Chystik/runtime-metrics/internal/service/server"
 	"github.com/Chystik/runtime-metrics/internal/syncer"
 	"github.com/Chystik/runtime-metrics/internal/transport/restapi"
@@ -71,7 +72,15 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 			logger.Fatal(err.Error())
 		}
 
-		meticsRepository = postgres.NewMetricsRepo(db, logger.Logger)
+		// retryer
+		r := retryer.NewConnRetryer(
+			3,
+			time.Duration(time.Second),
+			time.Duration(2*time.Second),
+			logger.Logger,
+		)
+
+		meticsRepository = postgres.NewMetricsRepo(db, r, logger.Logger)
 	} else if cfg.FileStoragePath != "" {
 		// fs storage
 		localStorage, err := localfs.New(cfg, inMemRepo)

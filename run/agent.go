@@ -2,24 +2,16 @@ package run
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"net"
 	"os"
-	"syscall"
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
 	agenthttpclient "github.com/Chystik/runtime-metrics/internal/adapters/http_client"
 	"github.com/Chystik/runtime-metrics/internal/logger"
+	"github.com/Chystik/runtime-metrics/internal/retryer"
 	agentservice "github.com/Chystik/runtime-metrics/internal/service/agent"
 	"github.com/Chystik/runtime-metrics/internal/transport/httpclient"
 	"go.uber.org/zap"
-)
-
-var (
-	errConnNextTry = "cannot connect to the server. next try in %d seconds"
-	errConnExit    = "cannot connect to the server: %v. exit"
 )
 
 type jobResult struct {
@@ -38,11 +30,17 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 
 	p, r := time.Duration(cfg.PollInterval), time.Duration(cfg.ReportInterval)
 
-	attempts := 3
-
-	// intervals in seconds
-	triesInterval := 1
-	deltaInterval := 2
+	reportMetrics := retryer.NewConnRetryerFn(
+		3,
+		time.Duration(time.Second),
+		time.Duration(2*time.Second),
+		logger.Logger,
+		func() error {
+			reportCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			return agentService.ReportMetrics(reportCtx)
+		},
+	)
 
 	updateTicker := time.NewTicker(p)
 	reportTicker := time.NewTicker(r)
@@ -62,7 +60,7 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 
 	// init and run N workers, where N = RATE_LIMIT
 	for w := 0; w < numJobs; w++ {
-		go worker(agentService, attempts, triesInterval, deltaInterval, jobs, results, logger.Logger)
+		go worker(reportMetrics, jobs, results)
 	}
 
 	go func() {
@@ -91,34 +89,9 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 	}
 }
 
-func worker(as agentservice.AgentService, attempts, triesInterval, deltaInterval int, jobs chan struct{}, results chan jobResult, l *zap.Logger) {
+func worker(fn retryer.ConnRetryerFn, jobs chan struct{}, results chan jobResult) {
 	for range jobs {
-		err := reportMetricsRetryer(as, attempts, triesInterval, deltaInterval, l)
+		err := fn.DoWithRetryFn()
 		results <- jobResult{err: err}
 	}
-}
-
-func reportMetricsRetryer(as agentservice.AgentService, attempts, triesInterval, deltaInterval int, l *zap.Logger) error {
-	reportCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	err := as.ReportMetrics(reportCtx)
-	if err != nil {
-		var netOpErr *net.OpError
-		if errors.As(err, &netOpErr) && errors.Is(netOpErr, syscall.ECONNREFUSED) {
-			a := attempts
-			ti := triesInterval
-			for a > 0 && err != nil {
-				l.Info(fmt.Sprintf(errConnNextTry, ti))
-				time.Sleep(time.Duration(ti) * time.Second)
-				err = as.ReportMetrics(reportCtx)
-				a--
-				ti = ti + deltaInterval
-			}
-			if err != nil {
-				return fmt.Errorf(errConnExit, err)
-			}
-		}
-	}
-	return err
 }
