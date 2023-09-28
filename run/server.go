@@ -39,7 +39,7 @@ const (
 
 func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	// logger
-	logger, err := logger.Initialize(cfg.LogLevel)
+	logger, err := logger.Initialize(cfg.LogLevel, "./server.log")
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
