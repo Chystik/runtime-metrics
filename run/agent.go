@@ -14,6 +14,10 @@ import (
 	"go.uber.org/zap"
 )
 
+type connRetryerFn interface {
+	DoWithRetryFn() error
+}
+
 type jobResult struct {
 	err error
 }
@@ -36,7 +40,7 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 		time.Duration(2*time.Second),
 		logger.Logger,
 		func() error {
-			reportCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			reportCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 			return agentService.ReportMetrics(reportCtx)
 		},
@@ -89,7 +93,7 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 	}
 }
 
-func worker(fn retryer.ConnRetryerFn, jobs chan struct{}, results chan jobResult) {
+func worker(fn connRetryerFn, jobs chan struct{}, results chan jobResult) {
 	for range jobs {
 		err := fn.DoWithRetryFn()
 		results <- jobResult{err: err}

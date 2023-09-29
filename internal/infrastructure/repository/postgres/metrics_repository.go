@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	"github.com/Chystik/runtime-metrics/internal/models"
-	"github.com/Chystik/runtime-metrics/internal/retryer"
 
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
@@ -16,13 +15,17 @@ var (
 	ErrNotFoundMetric = errors.New("not found in repository")
 )
 
+type connRetryer interface {
+	DoWithRetry(retryableFunc func() error) error
+}
+
 type pgRepo struct {
-	r  retryer.ConnRetryer
+	r  connRetryer
 	db *sqlx.DB
 	l  *zap.Logger
 }
 
-func NewMetricsRepo(db *sqlx.DB, r retryer.ConnRetryer, logger *zap.Logger) *pgRepo {
+func NewMetricsRepo(db *sqlx.DB, r connRetryer, logger *zap.Logger) *pgRepo {
 	return &pgRepo{
 		db: db,
 		r:  r,
