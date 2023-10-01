@@ -57,11 +57,11 @@ func (pi PollInterval) String() string {
 }
 
 func (pi *PollInterval) Set(s string) error {
-	t, err := strconv.Atoi(s)
+	t, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return errors.New("only digits allowed for Poll intervar")
 	}
-	*pi = PollInterval(time.Duration(t) * time.Second)
+	*pi = PollInterval(time.Duration(t * 1e9)) // second
 	return nil
 }
 
@@ -70,10 +70,10 @@ func (ri ReportInterval) String() string {
 }
 
 func (ri *ReportInterval) Set(s string) error {
-	t, err := strconv.Atoi(s)
+	t, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return errors.New("only digits allowed for Report intervar")
 	}
-	*ri = ReportInterval(time.Duration(t) * time.Second)
+	*ri = ReportInterval(time.Duration(t * 1e9)) // second
 	return nil
 }
