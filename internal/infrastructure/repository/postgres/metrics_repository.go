@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"sort"
 
 	"github.com/Chystik/runtime-metrics/internal/models"
 
@@ -117,6 +118,10 @@ func (pg *pgRepo) GetAll(ctx context.Context) ([]models.Metric, error) {
 
 func (pg *pgRepo) UpdateAll(ctx context.Context, metrics []models.Metric) (err error) {
 	var tx *sql.Tx
+
+	sort.Slice(metrics, func(i, j int) bool { // prevent error on concurrent update: deadlock detected (SQLSTATE 40P01)
+		return metrics[i].ID < metrics[j].ID
+	})
 
 	err = pg.r.DoWithRetry(func() error {
 		tx, err = pg.db.Begin()
