@@ -59,6 +59,7 @@ func (h *hasher) WithHasher(next http.Handler) http.Handler {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
+			defer r.Body.Close()
 
 			hm.Write(body)
 			calculatedHash := hm.Sum(nil)
