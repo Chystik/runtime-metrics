@@ -2,6 +2,7 @@ package run
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
@@ -16,10 +17,6 @@ import (
 
 type connRetryerFn interface {
 	DoWithRetryFn() error
-}
-
-type jobResult struct {
-	err error
 }
 
 func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
@@ -51,8 +48,7 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 
 	numJobs := cfg.RateLimit
 
-	jobs := make(chan struct{}, numJobs)
-	results := make(chan jobResult, numJobs)
+	jobs := make(chan int, 1)
 
 	logger.Info(
 		"agent started",
@@ -64,38 +60,36 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 
 	// init and run N workers, where N = RATE_LIMIT
 	for w := 0; w < numJobs; w++ {
-		go worker(reportMetrics, jobs, results)
+		go worker(w, reportMetrics, jobs, logger.Logger)
 	}
 
-	go func() {
-		for {
-			select {
-			case <-updateTicker.C:
-				go agentService.UpdateMetrics()
-				go agentService.UpdateGoPsUtilMetrics()
-			case <-reportTicker.C:
-				go func() {
-					jobs <- struct{}{}
-				}()
-			case <-quit:
-				logger.Info("Interrupt signal. Shutdown")
-				close(jobs)
-				close(results)
-				os.Exit(0)
+loop:
+	for j := 0; ; {
+		select {
+		case <-updateTicker.C:
+			go agentService.UpdateMetrics()
+			go agentService.UpdateGoPsUtilMetrics()
+		case <-reportTicker.C:
+			if len(jobs) < cap(jobs) {
+				jobs <- j
+				j++
 			}
-		}
-	}()
-
-	for r := range results {
-		if r.err != nil {
-			logger.Error(r.err.Error())
+		case <-quit:
+			logger.Info("Interrupt signal. Shutdown")
+			reportTicker.Stop()
+			close(jobs)
+			break loop
 		}
 	}
 }
 
-func worker(fn connRetryerFn, jobs chan struct{}, results chan jobResult) {
-	for range jobs {
+func worker(w int, fn connRetryerFn, jobs chan int, logger *zap.Logger) {
+	for j := range jobs {
+		logger.Debug(fmt.Sprintf("Worker %d started job %d", w, j))
 		err := fn.DoWithRetryFn()
-		results <- jobResult{err: err}
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		logger.Debug(fmt.Sprintf("Worker %d finished job %d", w, j))
 	}
 }
