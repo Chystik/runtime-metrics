@@ -13,7 +13,9 @@ func parseFlags(cfg *config.AgentConfig) {
 	_ = flag.Value(&cfg.ReportInterval)
 
 	flag.Var(cfg, "a", "Net address host:port")
-	flag.Var(&cfg.PollInterval, "p", "Poll interval in seconds")
-	flag.Var(&cfg.ReportInterval, "r", "Report interval in seconds")
+	flag.Var(&cfg.PollInterval, "p", "Poll interval in seconds, min 0.000000001 sec")
+	flag.Var(&cfg.ReportInterval, "r", "Report interval in seconds, min 0.000000001 sec")
+	flag.StringVar(&cfg.SHAkey, "k", "", "sha key")
+	flag.IntVar(&cfg.RateLimit, "l", 1, "report metrics rate limiter")
 	flag.Parse()
 }

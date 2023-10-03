@@ -2,67 +2,94 @@ package run
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net"
 	"os"
-	"syscall"
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
 	agenthttpclient "github.com/Chystik/runtime-metrics/internal/adapters/http_client"
+	"github.com/Chystik/runtime-metrics/internal/logger"
+	"github.com/Chystik/runtime-metrics/internal/retryer"
 	agentservice "github.com/Chystik/runtime-metrics/internal/service/agent"
 	"github.com/Chystik/runtime-metrics/internal/transport/httpclient"
+	"go.uber.org/zap"
 )
+
+type connRetryerFn interface {
+	DoWithRetryFn() error
+}
 
 func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 	client := httpclient.NewHTTPClient(cfg)
 	agentClient := agenthttpclient.New(client, cfg)
 	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
 
+	logger, err := logger.Initialize("info", "./agent.log")
+	if err != nil {
+		panic(err)
+	}
+
 	p, r := time.Duration(cfg.PollInterval), time.Duration(cfg.ReportInterval)
 
-	attempts := 3
+	reportMetrics := retryer.NewConnRetryerFn(
+		3,
+		time.Duration(time.Second),
+		time.Duration(2*time.Second),
+		logger.Logger,
+		func() error {
+			reportCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			return agentService.ReportMetrics(reportCtx)
+		},
+	)
 
-	// intervals in seconds
-	triesInterval := 1
-	deltaInterval := 2
+	updateTicker := time.NewTicker(p)
+	reportTicker := time.NewTicker(r)
 
-	updateTimer := time.NewTimer(p)
-	reportTimer := time.NewTimer(r)
+	numJobs := cfg.RateLimit
 
-	for {
+	jobs := make(chan int, 1)
+
+	logger.Info(
+		"agent started",
+		zap.String("Address", cfg.Address),
+		zap.Duration("Poll interval", time.Duration(cfg.PollInterval)),
+		zap.Duration("Report interval", time.Duration(cfg.ReportInterval)),
+		zap.Int("Rate limit", cfg.RateLimit),
+	)
+
+	// init and run N workers, where N = RATE_LIMIT
+	for w := 0; w < numJobs; w++ {
+		go worker(w, reportMetrics, jobs, logger.Logger)
+	}
+
+loop:
+	for j := 0; ; {
 		select {
-		case <-updateTimer.C:
-			agentService.UpdateMetrics()
-			updateTimer.Reset(p)
-		case <-reportTimer.C:
-			reportMetricsRetrier(agentService, attempts, triesInterval, deltaInterval)
-			reportTimer.Reset(r)
+		case <-updateTicker.C:
+			go agentService.UpdateMetrics()
+			go agentService.UpdateGoPsUtilMetrics()
+		case <-reportTicker.C:
+			if len(jobs) < cap(jobs) {
+				jobs <- j
+				j++
+			}
 		case <-quit:
-			fmt.Println("Interrupt signal. Shutdown")
-			os.Exit(0)
+			logger.Info("Interrupt signal. Shutdown")
+			reportTicker.Stop()
+			close(jobs)
+			break loop
 		}
 	}
 }
 
-func reportMetricsRetrier(as agentservice.AgentService, attempts, triesInterval, deltaInterval int) {
-	reportCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	err := as.ReportMetrics(reportCtx)
-	if err != nil {
-		if attempts <= 0 {
-			fmt.Println("cannot connect to the server. exit")
-			os.Exit(0)
+func worker(w int, fn connRetryerFn, jobs chan int, logger *zap.Logger) {
+	for j := range jobs {
+		logger.Debug(fmt.Sprintf("Worker %d started job %d", w, j))
+		err := fn.DoWithRetryFn()
+		if err != nil {
+			logger.Error(err.Error())
 		}
-		var netOpErr *net.OpError
-		if errors.As(err, &netOpErr) && errors.Is(netOpErr, syscall.ECONNREFUSED) {
-			fmt.Printf("cannot connect to the server. next try in %d seconds\n", triesInterval)
-			time.Sleep(time.Duration(triesInterval) * time.Second)
-			reportMetricsRetrier(as, attempts-1, triesInterval+deltaInterval, deltaInterval)
-			return
-		}
-		fmt.Println(err)
+		logger.Debug(fmt.Sprintf("Worker %d finished job %d", w, j))
 	}
 }

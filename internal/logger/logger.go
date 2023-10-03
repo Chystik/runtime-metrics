@@ -39,7 +39,7 @@ type logger struct {
 	*zap.Logger
 }
 
-func Initialize(level string) (*logger, error) {
+func Initialize(level string, outPath ...string) (*logger, error) {
 	lvl, err := zap.ParseAtomicLevel(level)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,10 @@ func Initialize(level string) (*logger, error) {
 	cfg := zap.NewProductionConfig()
 	cfg.Level = lvl
 	cfg.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
-	cfg.OutputPaths = []string{"./server.log", "stderr"}
+
+	if outPath != nil {
+		cfg.OutputPaths = append(outPath, "stderr")
+	}
 
 	zl, err := cfg.Build()
 	if err != nil {

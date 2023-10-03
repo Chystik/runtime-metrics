@@ -55,8 +55,8 @@ func (ls *localStorage) Write() error {
 		return err
 	}
 
-	ls.inMemRepo.Mu.Lock()
-	defer ls.inMemRepo.Mu.Unlock()
+	ls.inMemRepo.Mu.RLock()
+	defer ls.inMemRepo.Mu.RUnlock()
 	return ls.encoder.Encode(ls.inMemRepo.Data)
 }
 

@@ -13,10 +13,12 @@ import (
 	"github.com/Chystik/runtime-metrics/internal/adapters/db"
 	handlers "github.com/Chystik/runtime-metrics/internal/adapters/rest_api_handlers"
 	"github.com/Chystik/runtime-metrics/internal/compressor"
+	"github.com/Chystik/runtime-metrics/internal/hasher"
 	memstorage "github.com/Chystik/runtime-metrics/internal/infrastructure/repository/mem_storage"
 	"github.com/Chystik/runtime-metrics/internal/infrastructure/repository/postgres"
 	localfs "github.com/Chystik/runtime-metrics/internal/infrastructure/storage/local"
 	"github.com/Chystik/runtime-metrics/internal/logger"
+	"github.com/Chystik/runtime-metrics/internal/retryer"
 	metricsservice "github.com/Chystik/runtime-metrics/internal/service/server"
 	"github.com/Chystik/runtime-metrics/internal/syncer"
 	"github.com/Chystik/runtime-metrics/internal/transport/restapi"
@@ -38,7 +40,7 @@ const (
 
 func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	// logger
-	logger, err := logger.Initialize(cfg.LogLevel)
+	logger, err := logger.Initialize(cfg.LogLevel, "./server.log")
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
@@ -70,7 +72,15 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 			logger.Fatal(err.Error())
 		}
 
-		meticsRepository = postgres.NewMetricsRepo(db, logger.Logger)
+		// retryer
+		r := retryer.NewConnRetryer(
+			3,
+			time.Duration(time.Second),
+			time.Duration(2*time.Second),
+			logger.Logger,
+		)
+
+		meticsRepository = postgres.NewMetricsRepo(db, r, logger.Logger)
 	} else if cfg.FileStoragePath != "" {
 		// fs storage
 		localStorage, err := localfs.New(cfg, inMemRepo)
@@ -98,9 +108,13 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	// services
 	metricsService := metricsservice.New(meticsRepository)
 
+	// hasher
+	h := hasher.NewHasher(cfg.SHAkey, "HashSHA256")
+
 	// router
 	router := chi.NewRouter()
 	router.Use(logger.WithLogging)
+	router.Use(h.WithHasher)
 	router.Use(compressor.GzipMiddleware)
 	router.Use(middleware.Recoverer)
 
