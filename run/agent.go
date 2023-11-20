@@ -3,7 +3,6 @@ package run
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
@@ -19,7 +18,7 @@ type connRetryerFn interface {
 	DoWithRetryFn() error
 }
 
-func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
+func Agent(ctx context.Context, cfg *config.AgentConfig) {
 	client := httpclient.NewHTTPClient(cfg)
 	agentClient := agenthttpclient.New(client, cfg)
 	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
@@ -74,7 +73,7 @@ loop:
 				jobs <- j
 				j++
 			}
-		case <-quit:
+		case <-ctx.Done():
 			logger.Info("Interrupt signal. Shutdown")
 			reportTicker.Stop()
 			close(jobs)

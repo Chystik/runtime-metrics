@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
@@ -38,7 +37,7 @@ const (
 	logDBDisconnect                = "Graceful close connection for DB client complete."
 )
 
-func Server(cfg *config.ServerConfig, quit chan os.Signal) {
+func Server(ctx context.Context, cfg *config.ServerConfig) {
 	// logger
 	logger, err := logger.Initialize(cfg.LogLevel, "./server.log")
 	if err != nil {
@@ -115,7 +114,7 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	router := chi.NewRouter()
 	router.Use(logger.WithLogging)
 	router.Use(h.WithHasher)
-	router.Use(compressor.GzipMiddleware)
+	router.Use(compressor.Compress(1))
 	router.Use(middleware.Recoverer)
 
 	// handlers
@@ -132,7 +131,9 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 		logger.Info(logHTTPServerStop)
 	}()
 
-	<-quit
+	// interrupt signal
+	<-ctx.Done()
+
 	logger.Info(logSignalInterrupt)
 	ctxShutdown, shutdown := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdown()
