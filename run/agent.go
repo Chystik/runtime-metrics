@@ -11,6 +11,7 @@ import (
 	"github.com/Chystik/runtime-metrics/internal/retryer"
 	agentservice "github.com/Chystik/runtime-metrics/internal/service/agent"
 	"github.com/Chystik/runtime-metrics/internal/transport/httpclient"
+
 	"go.uber.org/zap"
 )
 

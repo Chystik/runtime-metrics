@@ -7,6 +7,7 @@ import (
 	"github.com/Chystik/runtime-metrics/config"
 	"github.com/Chystik/runtime-metrics/internal/adapters"
 	"github.com/Chystik/runtime-metrics/internal/adapters/http_client/mocks"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

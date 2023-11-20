@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Chystik/runtime-metrics/internal/models"
+
 	"github.com/jmoiron/sqlx"
 )
 

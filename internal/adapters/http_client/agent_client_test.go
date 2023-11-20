@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/Chystik/runtime-metrics/config"
+
 	"github.com/stretchr/testify/assert"
 )
 
