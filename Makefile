@@ -1,19 +1,23 @@
 SHELL = /bin/bash
-.PHONY: test-one test-all dep test race lint gen cover statictest
 
+.PHONY: dep
 dep:
 	go mod download
 	go mod tidy
 
+.PHONY: test
 test:
 	go test ./...
 
+.PHONY: race
 race:
 	go test -v -race ./...
 
+.PHONY: lint
 lint:
 	/home/user/go/bin/golangci-lint run
 
+.PHONY: test-one
 # use: make test-one iter=9
 agent-bin = ./cmd/agent/agent
 server-bin = ./cmd/server/server
@@ -30,6 +34,7 @@ test-one:
 	-database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
 	rm $(agent-bin) $(server-bin)
 
+.PHONY: test-all
 # use: make test-all iter=9
 ifeq ($(shell test $(iter) -gt 9; echo $$?),0)
  $(eval t := $$$(iter))
@@ -52,13 +57,24 @@ test-all:
 	-database-dsn='postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable'
 	rm $(agent-bin) $(server-bin)
 
+.PHONY: gen
 gen:
 	go generate ./...
 
+.PHONY: cover
 cover:
 	go test -short -count=1 -race -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o=coverage.html
 	rm coverage.out
 
+.PHONY: statictest
 statictest:
 	go vet -vettool=statictest ./...
+
+.PHONY: dev-up
+dev-up:
+	docker-compose -f=docker-compose.dev.yml --env-file=.env.dev up -d
+
+.PHONY: dev-down
+dev-down:
+	docker-compose -f=docker-compose.dev.yml --env-file=.env.dev down --rmi local
