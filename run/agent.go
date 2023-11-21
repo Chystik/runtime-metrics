@@ -6,22 +6,21 @@ import (
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
-	agenthttpclient "github.com/Chystik/runtime-metrics/internal/adapters/http_client"
-	"github.com/Chystik/runtime-metrics/internal/logger"
-	"github.com/Chystik/runtime-metrics/internal/retryer"
+	agentapiclient "github.com/Chystik/runtime-metrics/internal/adapters/http_client"
+	"github.com/Chystik/runtime-metrics/internal/service"
 	agentservice "github.com/Chystik/runtime-metrics/internal/service/agent"
-	"github.com/Chystik/runtime-metrics/internal/transport/httpclient"
+	"github.com/Chystik/runtime-metrics/pkg/httpclient"
+	"github.com/Chystik/runtime-metrics/pkg/logger"
+	"github.com/Chystik/runtime-metrics/pkg/retryer"
 
 	"go.uber.org/zap"
 )
 
-type connRetryerFn interface {
-	DoWithRetryFn() error
-}
+const defaultHTTPClientTimeout = 20 * time.Second
 
 func Agent(ctx context.Context, cfg *config.AgentConfig) {
-	client := httpclient.NewHTTPClient(cfg)
-	agentClient := agenthttpclient.New(client, cfg)
+	client := httpclient.NewClient(httpclient.Timeout(defaultHTTPClientTimeout))
+	agentClient := agentapiclient.New(client, cfg)
 	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
 
 	logger, err := logger.Initialize("info", "./agent.log")
@@ -35,7 +34,7 @@ func Agent(ctx context.Context, cfg *config.AgentConfig) {
 		3,
 		time.Duration(time.Second),
 		time.Duration(2*time.Second),
-		logger.Logger,
+		logger,
 		func() error {
 			reportCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
@@ -60,7 +59,7 @@ func Agent(ctx context.Context, cfg *config.AgentConfig) {
 
 	// init and run N workers, where N = RATE_LIMIT
 	for w := 0; w < numJobs; w++ {
-		go worker(w, reportMetrics, jobs, logger.Logger)
+		go worker(w, reportMetrics, jobs, logger)
 	}
 
 loop:
@@ -83,7 +82,7 @@ loop:
 	}
 }
 
-func worker(w int, fn connRetryerFn, jobs chan int, logger *zap.Logger) {
+func worker(w int, fn service.ConnectionRetrierFn, jobs chan int, logger service.AppLogger) {
 	for j := range jobs {
 		logger.Debug(fmt.Sprintf("Worker %d started job %d", w, j))
 		err := fn.DoWithRetryFn()

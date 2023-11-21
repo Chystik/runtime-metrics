@@ -1,4 +1,4 @@
-package postgres
+package postgresrepo
 
 import (
 	"context"
@@ -7,26 +7,22 @@ import (
 	"sort"
 
 	"github.com/Chystik/runtime-metrics/internal/models"
+	"github.com/Chystik/runtime-metrics/internal/service"
 
 	"github.com/jmoiron/sqlx"
-	"go.uber.org/zap"
 )
 
 var (
 	ErrNotFoundMetric = errors.New("not found in repository")
 )
 
-type connRetryer interface {
-	DoWithRetry(retryableFunc func() error) error
-}
-
 type pgRepo struct {
-	r  connRetryer
 	db *sqlx.DB
-	l  *zap.Logger
+	r  service.ConnectionRetrier
+	l  service.AppLogger
 }
 
-func NewMetricsRepo(db *sqlx.DB, r connRetryer, logger *zap.Logger) *pgRepo {
+func NewMetricsRepo(db *sqlx.DB, r service.ConnectionRetrier, logger service.AppLogger) *pgRepo {
 	return &pgRepo{
 		db: db,
 		r:  r,

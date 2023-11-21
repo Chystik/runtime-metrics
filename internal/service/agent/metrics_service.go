@@ -8,8 +8,8 @@ import (
 	"sync"
 
 	"github.com/Chystik/runtime-metrics/config"
-	"github.com/Chystik/runtime-metrics/internal/adapters"
 	"github.com/Chystik/runtime-metrics/internal/models"
+	"github.com/Chystik/runtime-metrics/internal/service"
 
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
@@ -28,10 +28,10 @@ type agentService struct {
 	cpuMetrics         []cpu.InfoStat
 	mu                 sync.RWMutex
 	cache              map[string]models.Metric
-	client             adapters.AgentHTTPClient
+	client             service.AgentAPIClient
 }
 
-func New(c adapters.AgentHTTPClient, cm config.CollectableMetrics) *agentService {
+func New(c service.AgentAPIClient, cm config.CollectableMetrics) *agentService {
 	cache := make(map[string]models.Metric)
 
 	cache["PollCount"] = models.Metric{ID: "PollCount", MType: "counter", Delta: new(int64)}

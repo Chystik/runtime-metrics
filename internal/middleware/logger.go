@@ -1,11 +1,11 @@
-package logger
+package middleware
 
 import (
 	"net/http"
 	"time"
 
+	"github.com/Chystik/runtime-metrics/internal/service"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 type (
@@ -18,7 +18,15 @@ type (
 		http.ResponseWriter
 		responseData *responseData
 	}
+
+	midLogger struct {
+		service.AppLogger
+	}
 )
+
+func MidLogger(l service.AppLogger) *midLogger {
+	return &midLogger{l}
+}
 
 func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 	size, err := r.ResponseWriter.Write(b)
@@ -35,33 +43,7 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.responseData.status = statusCode
 }
 
-type logger struct {
-	*zap.Logger
-}
-
-func Initialize(level string, outPath ...string) (*logger, error) {
-	lvl, err := zap.ParseAtomicLevel(level)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := zap.NewProductionConfig()
-	cfg.Level = lvl
-	cfg.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
-
-	if outPath != nil {
-		cfg.OutputPaths = append(outPath, "stderr")
-	}
-
-	zl, err := cfg.Build()
-	if err != nil {
-		return nil, err
-	}
-
-	return &logger{zl}, nil
-}
-
-func (l *logger) WithLogging(next http.Handler) http.Handler {
+func (l *midLogger) WithLogging(next http.Handler) http.Handler {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -73,14 +55,18 @@ func (l *logger) WithLogging(next http.Handler) http.Handler {
 			ResponseWriter: w,
 			responseData:   responseData,
 		}
+		l.Info(
+			"request started",
+			zap.String("uri", r.RequestURI),
+			zap.String("method", r.Method),
+		)
+
 		next.ServeHTTP(&lw, r)
 
 		duration := time.Since(start)
 
 		l.Info(
-			"request started",
-			zap.String("uri", r.RequestURI),
-			zap.String("method", r.Method),
+			"response completed",
 			zap.Int("status", responseData.status),
 			zap.Duration("duration", duration),
 			zap.Int("size", responseData.size),

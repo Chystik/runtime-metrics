@@ -1,4 +1,4 @@
-package agenthttpclient
+package agentapiclient
 
 import (
 	"fmt"

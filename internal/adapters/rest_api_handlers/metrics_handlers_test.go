@@ -7,9 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Chystik/runtime-metrics/internal/adapters"
 	"github.com/Chystik/runtime-metrics/internal/models"
-	"github.com/Chystik/runtime-metrics/internal/service/server/mocks"
+	"github.com/Chystik/runtime-metrics/internal/service/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -299,7 +298,7 @@ type metricsHandlersMocks struct {
 	metricsService *mocks.MetricsService
 }
 
-func getMetricsHandlersMocks() (adapters.MetricsHandlers, *metricsHandlersMocks) {
+func getMetricsHandlersMocks() (*metricsHandlers, *metricsHandlersMocks) {
 	m := &metricsHandlersMocks{
 		metricsService: &mocks.MetricsService{},
 	}

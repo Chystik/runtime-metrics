@@ -10,13 +10,13 @@ import (
 	"github.com/Chystik/runtime-metrics/config"
 	"github.com/Chystik/runtime-metrics/internal/infrastructure/storage"
 	"github.com/Chystik/runtime-metrics/internal/models"
-	metricsservice "github.com/Chystik/runtime-metrics/internal/service/server"
+	"github.com/Chystik/runtime-metrics/internal/service"
 )
 
 var once sync.Once
 
 type syncer struct {
-	src  metricsservice.MetricsRepository
+	src  service.MetricsRepository
 	dst  storage.MetricsStorage
 	tick chan struct{}
 	i    time.Duration
@@ -29,7 +29,7 @@ func New(cfg *config.ServerConfig) *syncer {
 	}
 }
 
-func (s *syncer) Initialize(cfg *config.ServerConfig, src metricsservice.MetricsRepository, dst storage.MetricsStorage) error {
+func (s *syncer) Initialize(cfg *config.ServerConfig, src service.MetricsRepository, dst storage.MetricsStorage) error {
 	s.src = src
 	s.dst = dst
 

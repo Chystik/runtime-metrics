@@ -2,11 +2,12 @@ package retryer
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"syscall"
 	"time"
 
-	"go.uber.org/zap"
+	"github.com/Chystik/runtime-metrics/pkg/logger"
 )
 
 var (
@@ -17,20 +18,20 @@ type Retryer struct {
 	attempts        int
 	triesStartAfter time.Duration
 	triesGrowsDelta time.Duration
-	log             *zap.Logger
+	log             *logger.Logger
 }
 
 type RetryerFn struct {
 	attempts        int
 	triesStartAfter time.Duration
 	triesGrowsDelta time.Duration
-	log             *zap.Logger
+	log             *logger.Logger
 	fn              func() error
 }
 
 // ConnRetryer retries function call if function returns connection refused error
 // retry time grows as: triesStartAfter = triesStartAfter + triesGrowsDelta
-func NewConnRetryer(attempts int, triesStartAfter, triesGrowsDelta time.Duration, logger *zap.Logger) *Retryer {
+func NewConnRetryer(attempts int, triesStartAfter, triesGrowsDelta time.Duration, logger *logger.Logger) *Retryer {
 	return &Retryer{
 		attempts:        attempts,
 		triesStartAfter: triesStartAfter,
@@ -41,7 +42,7 @@ func NewConnRetryer(attempts int, triesStartAfter, triesGrowsDelta time.Duration
 
 // ConnRetryerFn retries function call if function returns connection refused error
 // retry time grows as: triesStartAfter = triesStartAfter + triesGrowsDelta
-func NewConnRetryerFn(attempts int, triesStartAfter, triesGrowsDelta time.Duration, logger *zap.Logger, fn func() error) *RetryerFn {
+func NewConnRetryerFn(attempts int, triesStartAfter, triesGrowsDelta time.Duration, logger *logger.Logger, fn func() error) *RetryerFn {
 	return &RetryerFn{
 		attempts:        attempts,
 		triesStartAfter: triesStartAfter,
@@ -59,7 +60,7 @@ func (r *Retryer) DoWithRetry(retryableFunc func() error) error {
 			a := r.attempts
 			ti := r.triesStartAfter
 			for a > 0 && err != nil {
-				r.log.Sugar().Infof(logRetryConnection, ti.Seconds())
+				r.log.Info(fmt.Sprintf(logRetryConnection, ti.Seconds()))
 				time.Sleep(ti)
 				err = retryableFunc()
 				a--
@@ -78,7 +79,7 @@ func (r *RetryerFn) DoWithRetryFn() error {
 			a := r.attempts
 			ti := r.triesStartAfter
 			for a > 0 && err != nil {
-				r.log.Sugar().Infof(logRetryConnection, ti.Seconds())
+				r.log.Info(fmt.Sprintf(logRetryConnection, ti.Seconds()))
 				time.Sleep(ti)
 				err = r.fn()
 				a--

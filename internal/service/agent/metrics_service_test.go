@@ -5,15 +5,15 @@ import (
 	"testing"
 
 	"github.com/Chystik/runtime-metrics/config"
-	"github.com/Chystik/runtime-metrics/internal/adapters"
-	"github.com/Chystik/runtime-metrics/internal/adapters/http_client/mocks"
+	"github.com/Chystik/runtime-metrics/internal/service"
+	"github.com/Chystik/runtime-metrics/internal/service/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func Test_New(t *testing.T) {
-	var c adapters.AgentHTTPClient
+	var c service.AgentAPIClient
 	var m []string
 
 	agentService := New(c, m)
@@ -56,12 +56,12 @@ func TestReportMetrics_WhenClientRetunNoError(t *testing.T) {
 }
 
 type agentServiceMocks struct {
-	client *mocks.AgentHTTPClient
+	client *mocks.AgentAPIClient
 }
 
 func getAgentServiceMocks() (AgentService, *agentServiceMocks) {
 	mks := &agentServiceMocks{
-		client: &mocks.AgentHTTPClient{},
+		client: &mocks.AgentAPIClient{},
 	}
 
 	as := New(mks.client, config.CollectableMetrics{})

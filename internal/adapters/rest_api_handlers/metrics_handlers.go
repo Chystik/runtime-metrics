@@ -12,7 +12,7 @@ import (
 	"text/template"
 
 	"github.com/Chystik/runtime-metrics/internal/models"
-	metricsservice "github.com/Chystik/runtime-metrics/internal/service/server"
+	"github.com/Chystik/runtime-metrics/internal/service"
 )
 
 const tplStr = `<table>
@@ -35,10 +35,10 @@ const tplStr = `<table>
 </table>`
 
 type metricsHandlers struct {
-	metricsService metricsservice.MetricsService
+	metricsService service.MetricsService
 }
 
-func NewMetricsHandlers(ms metricsservice.MetricsService) *metricsHandlers {
+func NewMetricsHandlers(ms service.MetricsService) *metricsHandlers {
 	h := &metricsHandlers{metricsService: ms}
 	return h
 }

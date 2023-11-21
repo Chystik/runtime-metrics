@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/Chystik/runtime-metrics/internal/models"
-	"github.com/Chystik/runtime-metrics/internal/service/server/mocks"
+	"github.com/Chystik/runtime-metrics/internal/service/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -27,7 +27,7 @@ func Test_metricsService_UpdateGauge(t *testing.T) {
 	}
 	tests := []struct {
 		name string
-		ss   MetricsService
+		ss   *metricsService
 		args args
 	}{
 		{
@@ -119,7 +119,7 @@ type metricsServiceMocks struct {
 	repo *mocks.MetricsRepository
 }
 
-func getMetricsServiceMocks() (MetricsService, *metricsServiceMocks) {
+func getMetricsServiceMocks() (*metricsService, *metricsServiceMocks) {
 	m := &metricsServiceMocks{
 		repo: &mocks.MetricsRepository{},
 	}

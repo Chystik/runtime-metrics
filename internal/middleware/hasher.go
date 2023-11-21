@@ -1,4 +1,4 @@
-package hasher
+package middleware
 
 import (
 	"bytes"
