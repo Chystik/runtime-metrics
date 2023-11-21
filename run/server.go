@@ -114,7 +114,7 @@ func Server(ctx context.Context, cfg *config.ServerConfig) {
 	router := chi.NewRouter()
 	router.Use(logger.WithLogging)
 	router.Use(h.WithHasher)
-	router.Use(compressor.Compress(1))
+	router.Use(compressor.GzipMiddleware)
 	router.Use(middleware.Recoverer)
 
 	// handlers
