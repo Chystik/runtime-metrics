@@ -1,11 +1,16 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/Chystik/runtime-metrics/internal/models"
 	"github.com/Chystik/runtime-metrics/internal/service/mocks"
@@ -37,13 +42,34 @@ func TestUpdateGaugeMetric(t *testing.T) {
 
 	res := rec.Result()
 
-	assert.Equal(t, res.StatusCode, expStatus)
+	assert.Equal(t, expStatus, res.StatusCode)
 
 	defer res.Body.Close()
 	_, err := io.ReadAll(res.Body)
 
-	require.NoError(t, err)
-	assert.Equal(t, res.Header.Get("Content-Type"), expContextType)
+	assert.NoError(t, err)
+	assert.Equal(t, expContextType, res.Header.Get("Content-Type"))
+
+}
+
+func TestUpdateGaugeMetric_ServiceReturnsError(t *testing.T) {
+	t.Parallel()
+	handlers, mks := getMetricsHandlersMocks()
+
+	expStatus := http.StatusInternalServerError
+
+	req := httptest.NewRequest(http.MethodPost, "/update/gauge/test1/25", nil)
+	rec := httptest.NewRecorder()
+
+	mks.metricsService.EXPECT().UpdateGauge(mock.Anything, mock.Anything).Return(errors.New("error"))
+	handlers.UpdateMetric(rec, req)
+	res := rec.Result()
+
+	assert.Equal(t, expStatus, res.StatusCode)
+
+	defer res.Body.Close()
+	_, err := io.ReadAll(res.Body)
+	assert.NoError(t, err)
 }
 
 func Test_metricsHandlers_UpdateMetric(t *testing.T) {
@@ -61,7 +87,8 @@ func Test_metricsHandlers_UpdateMetric(t *testing.T) {
 		pathPattern    string
 		reqMethod      string
 		expStatus      int
-		expContextType string
+		expContentType string
+		wantServiceErr bool
 	}{
 		{
 			name: "gauge",
@@ -74,7 +101,7 @@ func Test_metricsHandlers_UpdateMetric(t *testing.T) {
 			pathPattern:    "/update/%s/%s/%s",
 			reqMethod:      http.MethodPost,
 			expStatus:      http.StatusOK,
-			expContextType: "text/plain",
+			expContentType: "text/plain",
 		},
 		{
 			name: "counter",
@@ -87,7 +114,7 @@ func Test_metricsHandlers_UpdateMetric(t *testing.T) {
 			pathPattern:    "/update/%s/%s/%s",
 			reqMethod:      http.MethodPost,
 			expStatus:      http.StatusOK,
-			expContextType: "text/plain",
+			expContentType: "text/plain",
 		},
 		{
 			name:        "wrong method",
@@ -142,6 +169,32 @@ func Test_metricsHandlers_UpdateMetric(t *testing.T) {
 			reqMethod:   http.MethodPost,
 			expStatus:   http.StatusBadRequest,
 		},
+		{
+			name: "metricsService.UpdateGauge returns error",
+			metric: metric{
+				mType: "gauge",
+				mName: "Gauge",
+				name:  "test1",
+				value: "42",
+			},
+			pathPattern:    "/update/%s/%s/%s",
+			reqMethod:      http.MethodPost,
+			expStatus:      http.StatusInternalServerError,
+			wantServiceErr: true,
+		},
+		{
+			name: "metricsService.UpdateCounter returns error",
+			metric: metric{
+				mType: "counter",
+				mName: "Counter",
+				name:  "test1",
+				value: "42",
+			},
+			pathPattern:    "/update/%s/%s/%s",
+			reqMethod:      http.MethodPost,
+			expStatus:      http.StatusInternalServerError,
+			wantServiceErr: true,
+		},
 	}
 	for _, tt := range tests {
 		handlers, mks := getMetricsHandlersMocks()
@@ -151,7 +204,13 @@ func Test_metricsHandlers_UpdateMetric(t *testing.T) {
 			rec := httptest.NewRecorder()
 
 			methodName := fmt.Sprintf("Update%s", tt.metric.mName)
-			mks.metricsService.On(methodName, mock.Anything, mock.Anything).Return(nil)
+
+			var err error
+			if tt.wantServiceErr {
+				err = errors.New("some error")
+			}
+
+			mks.metricsService.On(methodName, mock.Anything, mock.Anything).Return(err)
 			handlers.UpdateMetric(rec, req)
 
 			res := rec.Result()
@@ -159,10 +218,212 @@ func Test_metricsHandlers_UpdateMetric(t *testing.T) {
 			assert.Equal(t, tt.expStatus, res.StatusCode)
 
 			defer res.Body.Close()
-			_, err := io.ReadAll(res.Body)
+			_, err = io.ReadAll(res.Body)
 
 			require.NoError(t, err)
-			assert.Equal(t, res.Header.Get("Content-Type"), tt.expContextType)
+			assert.Equal(t, res.Header.Get("Content-Type"), tt.expContentType)
+		})
+	}
+}
+
+func Test_metricsHandlers_UpdateMetricJSON(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name              string
+		metric            any
+		mockServiceMethod string
+		expStatus         int
+		expContentType    string
+		wantServiceErr    bool
+	}{
+		{
+			name:              "update gauge",
+			metric:            generateMetric("gauge", "test1"),
+			mockServiceMethod: "UpdateGauge",
+			expStatus:         http.StatusOK,
+			expContentType:    "application/json",
+		},
+		{
+			name:              "update gauge, metricsService.UpdateGauge returns error",
+			metric:            generateMetric("gauge", "test1"),
+			mockServiceMethod: "UpdateGauge",
+			expStatus:         http.StatusInternalServerError,
+			expContentType:    "",
+			wantServiceErr:    true,
+		},
+		{
+			name:              "update counter",
+			metric:            generateMetric("counter", "test1"),
+			mockServiceMethod: "UpdateCounter",
+			expStatus:         http.StatusOK,
+			expContentType:    "application/json",
+		},
+		{
+			name:              "update counter, metricsService.UpdateCounter returns error",
+			metric:            generateMetric("counter", "test1"),
+			mockServiceMethod: "UpdateCounter",
+			expStatus:         http.StatusInternalServerError,
+			expContentType:    "",
+			wantServiceErr:    true,
+		},
+		{
+			name:              "decoder returns error",
+			metric:            []any{"wrong", "metric"},
+			mockServiceMethod: "UpdateCounter",
+			expStatus:         http.StatusBadRequest,
+		},
+	}
+	for _, tt := range tests {
+		handlers, mks := getMetricsHandlersMocks()
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+
+			errEncode := json.NewEncoder(&buf).Encode(tt.metric)
+			assert.NoError(t, errEncode)
+
+			req := httptest.NewRequest(http.MethodPost, "/update", &buf)
+			rec := httptest.NewRecorder()
+
+			var err error
+			if tt.wantServiceErr {
+				err = errors.New("some error")
+			}
+
+			mks.metricsService.On(tt.mockServiceMethod, mock.Anything, mock.Anything).Return(err)
+			handlers.UpdateMetricJSON(rec, req)
+
+			res := rec.Result()
+
+			assert.Equal(t, tt.expStatus, res.StatusCode)
+
+			defer res.Body.Close()
+			_, err = io.ReadAll(res.Body)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.expContentType, res.Header.Get("Content-Type"))
+		})
+	}
+}
+
+func Test_metricsHandlers_UpdateMetricsJSON(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		metrics        any
+		expStatus      int
+		expContentType string
+		wantServiceErr bool
+	}{
+		{
+			name:           "update 10 metrics",
+			metrics:        generateMetrics(10),
+			expStatus:      http.StatusOK,
+			expContentType: "application/json",
+		},
+		{
+			name:           "update 10 metrics, metricsService.UpdateAll returns error",
+			metrics:        generateMetrics(10),
+			expStatus:      http.StatusInternalServerError,
+			expContentType: "",
+			wantServiceErr: true,
+		},
+		{
+			name:      "decoder returns error",
+			metrics:   []any{"wrong", "metric"},
+			expStatus: http.StatusBadRequest,
+		},
+	}
+	for _, tt := range tests {
+		handlers, mks := getMetricsHandlersMocks()
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+
+			errEncode := json.NewEncoder(&buf).Encode(tt.metrics)
+			assert.NoError(t, errEncode)
+
+			req := httptest.NewRequest(http.MethodPost, "/updates", &buf)
+			rec := httptest.NewRecorder()
+
+			var err error
+			if tt.wantServiceErr {
+				err = errors.New("some error")
+			}
+
+			mks.metricsService.On("UpdateAll", mock.Anything, mock.Anything).Return(err)
+			handlers.UpdateMetricsJSON(rec, req)
+
+			res := rec.Result()
+
+			assert.Equal(t, tt.expStatus, res.StatusCode)
+
+			defer res.Body.Close()
+			_, err = io.ReadAll(res.Body)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.expContentType, res.Header.Get("Content-Type"))
+		})
+	}
+}
+
+func Test_metricsHandlers_GetMetricJSON(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		metric         any
+		expStatus      int
+		expContentType string
+		wantServiceErr bool
+	}{
+		{
+			name:           "get metric",
+			metric:         generateMetric("gauge", "test1"),
+			expStatus:      http.StatusOK,
+			expContentType: "application/json",
+		},
+		{
+			name:           "metricsService.GetMetric returns error",
+			metric:         generateMetric("gauge", "test1"),
+			expStatus:      http.StatusNotFound,
+			expContentType: "",
+			wantServiceErr: true,
+		},
+		{
+			name:      "decoder returns error",
+			metric:    []any{"wrong", "metric"},
+			expStatus: http.StatusBadRequest,
+		},
+	}
+	for _, tt := range tests {
+		handlers, mks := getMetricsHandlersMocks()
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+
+			errEncode := json.NewEncoder(&buf).Encode(tt.metric)
+			assert.NoError(t, errEncode)
+
+			req := httptest.NewRequest(http.MethodPost, "/value", &buf)
+			rec := httptest.NewRecorder()
+
+			var err error
+			if tt.wantServiceErr {
+				err = errors.New("some error")
+			}
+
+			mks.metricsService.On("GetMetric", mock.Anything, mock.Anything).Return(tt.metric, err)
+			handlers.GetMetricJSON(rec, req)
+
+			res := rec.Result()
+
+			assert.Equal(t, tt.expStatus, res.StatusCode)
+
+			defer res.Body.Close()
+			_, err = io.ReadAll(res.Body)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.expContentType, res.Header.Get("Content-Type"))
 		})
 	}
 }
@@ -181,6 +442,7 @@ func Test_metricsHandlers_GetMetric(t *testing.T) {
 		reqMethod      string
 		expStatus      int
 		expContentType string
+		wantServiceErr bool
 	}{
 		{
 			name: "gauge",
@@ -230,6 +492,17 @@ func Test_metricsHandlers_GetMetric(t *testing.T) {
 			reqMethod:   http.MethodGet,
 			expStatus:   http.StatusBadRequest,
 		},
+		{
+			name: "metricsService.GetMetric returns error",
+			metric: metric{
+				mType: "counter",
+				name:  "test1",
+			},
+			pathPattern:    "/value/%s/%s",
+			reqMethod:      http.MethodGet,
+			expStatus:      http.StatusNotFound,
+			wantServiceErr: true,
+		},
 	}
 	for _, tt := range tests {
 		handlers, mks := getMetricsHandlersMocks()
@@ -238,7 +511,12 @@ func Test_metricsHandlers_GetMetric(t *testing.T) {
 			req := httptest.NewRequest(tt.reqMethod, target, nil)
 			rec := httptest.NewRecorder()
 
-			mks.metricsService.On("GetMetric", mock.Anything, mock.Anything).Return(models.Metric{Value: new(float64), Delta: new(int64)}, nil)
+			var err error
+			if tt.wantServiceErr {
+				err = errors.New("error")
+			}
+
+			mks.metricsService.On("GetMetric", mock.Anything, mock.Anything).Return(models.Metric{Value: new(float64), Delta: new(int64)}, err)
 			handlers.GetMetric(rec, req)
 
 			res := rec.Result()
@@ -246,7 +524,7 @@ func Test_metricsHandlers_GetMetric(t *testing.T) {
 			assert.Equal(t, tt.expStatus, res.StatusCode)
 
 			defer res.Body.Close()
-			_, err := io.ReadAll(res.Body)
+			_, err = io.ReadAll(res.Body)
 
 			require.NoError(t, err)
 			assert.Equal(t, res.Header.Get("Content-Type"), tt.expContentType)
@@ -278,7 +556,9 @@ func Test_metricsHandlers_AllMetrics(t *testing.T) {
 	for _, tt := range tests {
 		handlers, mks := getMetricsHandlersMocks()
 		t.Run(tt.name, func(t *testing.T) {
-			mks.metricsService.On("GetAllMetrics", mock.Anything).Return([]models.Metric{}, nil)
+			expMetrics := generateMetrics(10)
+
+			mks.metricsService.On("GetAllMetrics", mock.Anything).Return(expMetrics, nil)
 			handlers.AllMetrics(tt.args.w, tt.args.r)
 
 			res := tt.args.w.Result()
@@ -305,4 +585,41 @@ func getMetricsHandlersMocks() (*metricsHandlers, *metricsHandlersMocks) {
 	handlers := NewMetricsHandlers(m.metricsService)
 
 	return handlers, m
+}
+
+func generateMetrics(count int) []models.Metric {
+	m := make([]models.Metric, count)
+
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	randMetricType := [2]string{"gauge", "counter"}
+
+	for i := range m {
+		mName := fmt.Sprintf("TestMetric%d", i)
+		mType := randMetricType[rand.Intn(2)]
+		m[i] = generateMetric(mType, mName)
+	}
+
+	return m
+}
+
+func generateMetric(metricType string, metricName string) models.Metric {
+	var m models.Metric
+
+	min := 1e1
+	max := 1e3
+
+	m.ID = metricName
+	m.MType = metricType
+
+	switch metricType {
+	case "gauge":
+		m.Value = new(float64)
+		*m.Value = min + rand.Float64()*(max-min)
+	case "counter":
+		m.Delta = new(int64)
+		*m.Delta = int64(min + rand.Float64()*(max-min))
+	}
+
+	return m
 }
