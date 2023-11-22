@@ -26,7 +26,7 @@ func (dh *dbHandlers) PingDB(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), dh.pingTimeout)
 	defer cancel()
 
-	w.Header().Set("Content-Tye", "text/plain")
+	w.Header().Set("Content-Type", "text/plain")
 
 	err := dh.db.Ping(ctx)
 	if err != nil {
