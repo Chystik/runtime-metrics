@@ -22,13 +22,13 @@ func (_m *AgentAPIClient) EXPECT() *AgentAPIClient_Expecter {
 	return &AgentAPIClient_Expecter{mock: &_m.Mock}
 }
 
-// ReportMetrics provides a mock function with given fields: metrics
-func (_m *AgentAPIClient) ReportMetrics(metrics map[string]interface{}) error {
-	ret := _m.Called(metrics)
+// ReportMetrics provides a mock function with given fields: ctx, metrics
+func (_m *AgentAPIClient) ReportMetrics(ctx context.Context, metrics map[string]interface{}) error {
+	ret := _m.Called(ctx, metrics)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(map[string]interface{}) error); ok {
-		r0 = rf(metrics)
+	if rf, ok := ret.Get(0).(func(context.Context, map[string]interface{}) error); ok {
+		r0 = rf(ctx, metrics)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -42,14 +42,15 @@ type AgentAPIClient_ReportMetrics_Call struct {
 }
 
 // ReportMetrics is a helper method to define mock.On call
+//   - ctx context.Context
 //   - metrics map[string]interface{}
-func (_e *AgentAPIClient_Expecter) ReportMetrics(metrics interface{}) *AgentAPIClient_ReportMetrics_Call {
-	return &AgentAPIClient_ReportMetrics_Call{Call: _e.mock.On("ReportMetrics", metrics)}
+func (_e *AgentAPIClient_Expecter) ReportMetrics(ctx interface{}, metrics interface{}) *AgentAPIClient_ReportMetrics_Call {
+	return &AgentAPIClient_ReportMetrics_Call{Call: _e.mock.On("ReportMetrics", ctx, metrics)}
 }
 
-func (_c *AgentAPIClient_ReportMetrics_Call) Run(run func(metrics map[string]interface{})) *AgentAPIClient_ReportMetrics_Call {
+func (_c *AgentAPIClient_ReportMetrics_Call) Run(run func(ctx context.Context, metrics map[string]interface{})) *AgentAPIClient_ReportMetrics_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(map[string]interface{}))
+		run(args[0].(context.Context), args[1].(map[string]interface{}))
 	})
 	return _c
 }
@@ -59,18 +60,18 @@ func (_c *AgentAPIClient_ReportMetrics_Call) Return(_a0 error) *AgentAPIClient_R
 	return _c
 }
 
-func (_c *AgentAPIClient_ReportMetrics_Call) RunAndReturn(run func(map[string]interface{}) error) *AgentAPIClient_ReportMetrics_Call {
+func (_c *AgentAPIClient_ReportMetrics_Call) RunAndReturn(run func(context.Context, map[string]interface{}) error) *AgentAPIClient_ReportMetrics_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ReportMetricsJSON provides a mock function with given fields: metrics
-func (_m *AgentAPIClient) ReportMetricsJSON(metrics map[string]models.Metric) error {
-	ret := _m.Called(metrics)
+// ReportMetricsJSON provides a mock function with given fields: ctx, metrics
+func (_m *AgentAPIClient) ReportMetricsJSON(ctx context.Context, metrics map[string]models.Metric) error {
+	ret := _m.Called(ctx, metrics)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(map[string]models.Metric) error); ok {
-		r0 = rf(metrics)
+	if rf, ok := ret.Get(0).(func(context.Context, map[string]models.Metric) error); ok {
+		r0 = rf(ctx, metrics)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -84,14 +85,15 @@ type AgentAPIClient_ReportMetricsJSON_Call struct {
 }
 
 // ReportMetricsJSON is a helper method to define mock.On call
+//   - ctx context.Context
 //   - metrics map[string]models.Metric
-func (_e *AgentAPIClient_Expecter) ReportMetricsJSON(metrics interface{}) *AgentAPIClient_ReportMetricsJSON_Call {
-	return &AgentAPIClient_ReportMetricsJSON_Call{Call: _e.mock.On("ReportMetricsJSON", metrics)}
+func (_e *AgentAPIClient_Expecter) ReportMetricsJSON(ctx interface{}, metrics interface{}) *AgentAPIClient_ReportMetricsJSON_Call {
+	return &AgentAPIClient_ReportMetricsJSON_Call{Call: _e.mock.On("ReportMetricsJSON", ctx, metrics)}
 }
 
-func (_c *AgentAPIClient_ReportMetricsJSON_Call) Run(run func(metrics map[string]models.Metric)) *AgentAPIClient_ReportMetricsJSON_Call {
+func (_c *AgentAPIClient_ReportMetricsJSON_Call) Run(run func(ctx context.Context, metrics map[string]models.Metric)) *AgentAPIClient_ReportMetricsJSON_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(map[string]models.Metric))
+		run(args[0].(context.Context), args[1].(map[string]models.Metric))
 	})
 	return _c
 }
@@ -101,7 +103,7 @@ func (_c *AgentAPIClient_ReportMetricsJSON_Call) Return(_a0 error) *AgentAPIClie
 	return _c
 }
 
-func (_c *AgentAPIClient_ReportMetricsJSON_Call) RunAndReturn(run func(map[string]models.Metric) error) *AgentAPIClient_ReportMetricsJSON_Call {
+func (_c *AgentAPIClient_ReportMetricsJSON_Call) RunAndReturn(run func(context.Context, map[string]models.Metric) error) *AgentAPIClient_ReportMetricsJSON_Call {
 	_c.Call.Return(run)
 	return _c
 }

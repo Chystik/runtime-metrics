@@ -7,7 +7,7 @@ import (
 )
 
 type AgentAPIClient interface {
-	ReportMetrics(metrics map[string]interface{}) error
-	ReportMetricsJSON(metrics map[string]models.Metric) error
+	ReportMetrics(ctx context.Context, metrics map[string]interface{}) error
+	ReportMetricsJSON(ctx context.Context, metrics map[string]models.Metric) error
 	ReportMetricsJSONBatch(ctx context.Context, metrics map[string]models.Metric) error
 }
