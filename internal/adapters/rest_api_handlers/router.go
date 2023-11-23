@@ -15,7 +15,7 @@ func NewRouter(
 	cfg *config.ServerConfig,
 	router *chi.Mux,
 	ms service.MetricsService,
-	db service.PostgresClient,
+	db service.DBClient,
 	pingTimeout time.Duration,
 	logger service.AppLogger,
 ) {

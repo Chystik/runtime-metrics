@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-type PostgresClient interface {
+type DBClient interface {
 	Connect(ctx context.Context) error
 	Disconnect(ctx context.Context) error
 	Migrate() error

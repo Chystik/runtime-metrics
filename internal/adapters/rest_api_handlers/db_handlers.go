@@ -9,12 +9,12 @@ import (
 )
 
 type dbHandlers struct {
-	db          service.PostgresClient
+	db          service.DBClient
 	logger      service.AppLogger
 	pingTimeout time.Duration
 }
 
-func NewDBHandlers(db service.PostgresClient, logger service.AppLogger, pingTimeout time.Duration) *dbHandlers {
+func NewDBHandlers(db service.DBClient, logger service.AppLogger, pingTimeout time.Duration) *dbHandlers {
 	return &dbHandlers{
 		db:          db,
 		logger:      logger,
