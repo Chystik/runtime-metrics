@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/Chystik/runtime-metrics/internal/models"
-	"github.com/Chystik/runtime-metrics/internal/service/server/mocks"
+	"github.com/Chystik/runtime-metrics/internal/service/mocks"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -26,7 +27,7 @@ func Test_metricsService_UpdateGauge(t *testing.T) {
 	}
 	tests := []struct {
 		name string
-		ss   MetricsService
+		ss   *metricsService
 		args args
 	}{
 		{
@@ -79,7 +80,7 @@ func TestGetMetric_WhenRepoReturnResult(t *testing.T) {
 	}
 
 	repoMock.On("Get", mock.Anything, mock.Anything).Return(expected, nil)
-	actual, actualErr := service.GetMetric(context.Background(), expected)
+	actual, actualErr := service.Get(context.Background(), expected)
 
 	assert.NoError(t, actualErr)
 	assert.Equal(t, expected, actual)
@@ -94,7 +95,7 @@ func TestGetMetric_WhenRepoReturnError(t *testing.T) {
 	expError := errors.New("some error")
 
 	repoMock.On("Get", mock.Anything, mock.Anything).Return(expected, expError)
-	actual, actualErr := service.GetMetric(context.Background(), models.Metric{ID: "some name"})
+	actual, actualErr := service.Get(context.Background(), models.Metric{ID: "some name"})
 
 	assert.ErrorIs(t, expError, actualErr)
 	assert.Equal(t, expected, actual)
@@ -108,7 +109,7 @@ func TestGetAllMetrics(t *testing.T) {
 	expected := []models.Metric{}
 
 	repoMock.On("GetAll", mock.Anything, mock.Anything).Return(expected, nil)
-	actual, err := service.GetAllMetrics(context.Background())
+	actual, err := service.GetAll(context.Background())
 
 	assert.NoError(t, err)
 	assert.Equal(t, expected, actual)
@@ -118,7 +119,7 @@ type metricsServiceMocks struct {
 	repo *mocks.MetricsRepository
 }
 
-func getMetricsServiceMocks() (MetricsService, *metricsServiceMocks) {
+func getMetricsServiceMocks() (*metricsService, *metricsServiceMocks) {
 	m := &metricsServiceMocks{
 		repo: &mocks.MetricsRepository{},
 	}

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -12,7 +11,7 @@ import (
 	"text/template"
 
 	"github.com/Chystik/runtime-metrics/internal/models"
-	metricsservice "github.com/Chystik/runtime-metrics/internal/service/server"
+	"github.com/Chystik/runtime-metrics/internal/service"
 )
 
 const tplStr = `<table>
@@ -35,10 +34,10 @@ const tplStr = `<table>
 </table>`
 
 type metricsHandlers struct {
-	metricsService metricsservice.MetricsService
+	metricsService service.MetricsService
 }
 
-func NewMetricsHandlers(ms metricsservice.MetricsService) *metricsHandlers {
+func NewMetricsHandlers(ms service.MetricsService) *metricsHandlers {
 	h := &metricsHandlers{metricsService: ms}
 	return h
 }
@@ -50,7 +49,6 @@ func (mh *metricsHandlers) UpdateMetric(w http.ResponseWriter, r *http.Request) 
 		metric  models.Metric
 		err     error
 	)
-	ctx := context.Background()
 
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusBadRequest)
@@ -77,7 +75,7 @@ func (mh *metricsHandlers) UpdateMetric(w http.ResponseWriter, r *http.Request) 
 		}
 
 		metric.Value = v
-		err = mh.metricsService.UpdateGauge(ctx, metric)
+		err = mh.metricsService.UpdateGauge(r.Context(), metric)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -94,7 +92,7 @@ func (mh *metricsHandlers) UpdateMetric(w http.ResponseWriter, r *http.Request) 
 		*v = int64(val)
 
 		metric.Delta = v
-		err = mh.metricsService.UpdateCounter(ctx, metric)
+		err = mh.metricsService.UpdateCounter(r.Context(), metric)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -118,7 +116,6 @@ func (mh *metricsHandlers) GetMetric(w http.ResponseWriter, r *http.Request) {
 		result     string
 		err        error
 	)
-	ctx := context.Background()
 
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusBadRequest)
@@ -136,7 +133,7 @@ func (mh *metricsHandlers) GetMetric(w http.ResponseWriter, r *http.Request) {
 	metricName = path[1]
 	metricType = path[0]
 
-	metric, err = mh.metricsService.GetMetric(ctx, models.Metric{ID: metricName, MType: metricType})
+	metric, err = mh.metricsService.Get(r.Context(), models.Metric{ID: metricName, MType: metricType})
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -166,7 +163,6 @@ func (mh *metricsHandlers) UpdateMetricJSON(w http.ResponseWriter, r *http.Reque
 		buf    bytes.Buffer
 		err    error
 	)
-	ctx := context.Background()
 
 	err = json.NewDecoder(r.Body).Decode(&metric)
 	if err != nil {
@@ -176,9 +172,9 @@ func (mh *metricsHandlers) UpdateMetricJSON(w http.ResponseWriter, r *http.Reque
 
 	switch metric.MType {
 	case "gauge":
-		err = mh.metricsService.UpdateGauge(ctx, metric)
+		err = mh.metricsService.UpdateGauge(r.Context(), metric)
 	case "counter":
-		err = mh.metricsService.UpdateCounter(ctx, metric)
+		err = mh.metricsService.UpdateCounter(r.Context(), metric)
 	}
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -202,11 +198,8 @@ func (mh *metricsHandlers) UpdateMetricJSON(w http.ResponseWriter, r *http.Reque
 func (mh *metricsHandlers) UpdateMetricsJSON(w http.ResponseWriter, r *http.Request) {
 	var (
 		metrics []models.Metric
-		actual  []models.Metric
-		buf     bytes.Buffer
 		err     error
 	)
-	ctx := context.Background()
 
 	err = json.NewDecoder(r.Body).Decode(&metrics)
 	if err != nil {
@@ -214,24 +207,14 @@ func (mh *metricsHandlers) UpdateMetricsJSON(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = mh.metricsService.UpdateAll(ctx, metrics)
+	err = mh.metricsService.UpdateList(r.Context(), metrics)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	err = json.NewEncoder(&buf).Encode(actual)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_, err = w.Write(buf.Bytes())
-	if err != nil {
-		log.Println(err)
-	}
 }
 
 func (mh *metricsHandlers) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
@@ -240,7 +223,6 @@ func (mh *metricsHandlers) GetMetricJSON(w http.ResponseWriter, r *http.Request)
 		buf    bytes.Buffer
 		err    error
 	)
-	ctx := context.Background()
 
 	err = json.NewDecoder(r.Body).Decode(&metric)
 	if err != nil {
@@ -248,7 +230,7 @@ func (mh *metricsHandlers) GetMetricJSON(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	m, err := mh.metricsService.GetMetric(ctx, metric)
+	m, err := mh.metricsService.Get(r.Context(), metric)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -272,7 +254,6 @@ func (mh *metricsHandlers) AllMetrics(w http.ResponseWriter, r *http.Request) {
 	type formatMetrics struct {
 		Name, Type, Value string
 	}
-	ctx := context.Background()
 
 	var fm []formatMetrics
 
@@ -281,7 +262,7 @@ func (mh *metricsHandlers) AllMetrics(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	m, err := mh.metricsService.GetAllMetrics(ctx)
+	m, err := mh.metricsService.GetAll(r.Context())
 	if err != nil {
 		log.Println(err)
 	}

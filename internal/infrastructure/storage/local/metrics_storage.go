@@ -1,22 +1,24 @@
 package localfs
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/Chystik/runtime-metrics/config"
-	memstorage "github.com/Chystik/runtime-metrics/internal/infrastructure/repository/mem_storage"
+	"github.com/Chystik/runtime-metrics/internal/models"
+	"github.com/Chystik/runtime-metrics/internal/service"
 )
 
 type localStorage struct {
-	inMemRepo *memstorage.MemStorage
-	file      *os.File
-	encoder   *json.Encoder
-	decoder   *json.Decoder
+	metricsRepo service.MetricsRepository
+	file        *os.File
+	encoder     *json.Encoder
+	decoder     *json.Decoder
 }
 
-func New(cfg *config.ServerConfig, inMemRepo *memstorage.MemStorage) (*localStorage, error) {
+func NewMetricsStorage(cfg *config.ServerConfig, repo service.MetricsRepository) (*localStorage, error) {
 	if cfg.FileStoragePath == "" {
 		return nil, fmt.Errorf("file path not specified in server config: %v", cfg)
 	}
@@ -30,18 +32,22 @@ func New(cfg *config.ServerConfig, inMemRepo *memstorage.MemStorage) (*localStor
 	decoder := json.NewDecoder(file)
 
 	return &localStorage{
-		inMemRepo: inMemRepo,
-		file:      file,
-		encoder:   encoder,
-		decoder:   decoder,
+		metricsRepo: repo,
+		file:        file,
+		encoder:     encoder,
+		decoder:     decoder,
 	}, nil
 }
 
 func (ls *localStorage) Read() error {
-	ls.inMemRepo.Mu.Lock()
-	defer ls.inMemRepo.Mu.Unlock()
+	var m []models.Metric
 
-	return ls.decoder.Decode(&ls.inMemRepo.Data)
+	err := ls.decoder.Decode(&m)
+	if err != nil {
+		return err
+	}
+
+	return ls.metricsRepo.UpdateList(context.Background(), m)
 }
 
 func (ls *localStorage) Write() error {
@@ -55,9 +61,12 @@ func (ls *localStorage) Write() error {
 		return err
 	}
 
-	ls.inMemRepo.Mu.RLock()
-	defer ls.inMemRepo.Mu.RUnlock()
-	return ls.encoder.Encode(ls.inMemRepo.Data)
+	m, err := ls.metricsRepo.GetAll(context.Background())
+	if err != nil {
+		return err
+	}
+
+	return ls.encoder.Encode(m)
 }
 
 func (ls *localStorage) CloseFile() error {

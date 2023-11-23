@@ -3,28 +3,32 @@ package run
 import (
 	"context"
 	"fmt"
-	"os"
+	"sync"
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
-	agenthttpclient "github.com/Chystik/runtime-metrics/internal/adapters/http_client"
-	"github.com/Chystik/runtime-metrics/internal/logger"
-	"github.com/Chystik/runtime-metrics/internal/retryer"
+	agentapiclient "github.com/Chystik/runtime-metrics/internal/adapters/http_client"
+	"github.com/Chystik/runtime-metrics/internal/service"
 	agentservice "github.com/Chystik/runtime-metrics/internal/service/agent"
-	"github.com/Chystik/runtime-metrics/internal/transport/httpclient"
+	"github.com/Chystik/runtime-metrics/pkg/httpclient"
+	"github.com/Chystik/runtime-metrics/pkg/logger"
+	"github.com/Chystik/runtime-metrics/pkg/retryer"
+
 	"go.uber.org/zap"
 )
 
-type connRetryerFn interface {
-	DoWithRetryFn() error
-}
+const (
+	defaultHTTPClientTimeout = 20 * time.Second
+	reportMetricsTimeout     = 10 * time.Second
+	loggerLevel              = "info"
+)
 
-func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
-	client := httpclient.NewHTTPClient(cfg)
-	agentClient := agenthttpclient.New(client, cfg)
+func Agent(ctx context.Context, cfg *config.AgentConfig) {
+	client := httpclient.NewClient(httpclient.Timeout(defaultHTTPClientTimeout))
+	agentClient := agentapiclient.New(client, cfg)
 	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
 
-	logger, err := logger.Initialize("info", "./agent.log")
+	logger, err := logger.Initialize(loggerLevel, "./agent.log")
 	if err != nil {
 		panic(err)
 	}
@@ -35,9 +39,9 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 		3,
 		time.Duration(time.Second),
 		time.Duration(2*time.Second),
-		logger.Logger,
+		logger,
 		func() error {
-			reportCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			reportCtx, cancel := context.WithTimeout(context.Background(), reportMetricsTimeout)
 			defer cancel()
 			return agentService.ReportMetrics(reportCtx)
 		},
@@ -48,7 +52,7 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 
 	numJobs := cfg.RateLimit
 
-	jobs := make(chan int, 1)
+	jobs := make(chan struct{}, 1)
 
 	logger.Info(
 		"agent started",
@@ -58,38 +62,47 @@ func Agent(cfg *config.AgentConfig, quit chan os.Signal) {
 		zap.Int("Rate limit", cfg.RateLimit),
 	)
 
+	var wg sync.WaitGroup
+
 	// init and run N workers, where N = RATE_LIMIT
-	for w := 0; w < numJobs; w++ {
-		go worker(w, reportMetrics, jobs, logger.Logger)
+	for w := 1; w < numJobs+1; w++ {
+		wg.Add(1)
+		go func(i int) {
+			worker(i, reportMetrics, jobs, logger)
+			wg.Done()
+		}(w)
 	}
 
 loop:
-	for j := 0; ; {
+	for {
 		select {
 		case <-updateTicker.C:
 			go agentService.UpdateMetrics()
 			go agentService.UpdateGoPsUtilMetrics()
 		case <-reportTicker.C:
 			if len(jobs) < cap(jobs) {
-				jobs <- j
-				j++
+				jobs <- struct{}{}
 			}
-		case <-quit:
-			logger.Info("Interrupt signal. Shutdown")
+		case <-ctx.Done():
+			logger.Info("Interrupt signal. Shutting down.")
+			updateTicker.Stop()
 			reportTicker.Stop()
 			close(jobs)
 			break loop
 		}
 	}
+
+	logger.Info("Waiting for requests to be completed by all workers")
+	wg.Wait()
 }
 
-func worker(w int, fn connRetryerFn, jobs chan int, logger *zap.Logger) {
-	for j := range jobs {
-		logger.Debug(fmt.Sprintf("Worker %d started job %d", w, j))
+func worker(w int, fn service.ConnectionRetrierFn, jobs chan struct{}, logger service.AppLogger) {
+	for range jobs {
+		logger.Debug(fmt.Sprintf("Worker %d started job", w))
 		err := fn.DoWithRetryFn()
 		if err != nil {
 			logger.Error(err.Error())
 		}
-		logger.Debug(fmt.Sprintf("Worker %d finished job %d", w, j))
+		logger.Debug(fmt.Sprintf("Worker %d finished job", w))
 	}
 }

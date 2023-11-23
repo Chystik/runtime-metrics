@@ -16,6 +16,7 @@ type (
 		SHAkey         string `env:"KEY"`
 		RateLimit      int    `env:"RATE_LIMIT"`
 		CollectableMetrics
+		ProfileConfig ProfileConfig
 	}
 
 	PollInterval   time.Duration
@@ -30,6 +31,7 @@ func NewAgentCfg() *AgentConfig {
 		PollInterval:       PollInterval(2 * time.Second),
 		ReportInterval:     ReportInterval(10 * time.Second),
 		CollectableMetrics: []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc"},
+		ProfileConfig:      ProfileConfig{},
 	}
 
 	return cfg

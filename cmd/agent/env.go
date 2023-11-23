@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/Chystik/runtime-metrics/config"
+
 	"github.com/caarlos0/env"
 	"github.com/joho/godotenv"
 )

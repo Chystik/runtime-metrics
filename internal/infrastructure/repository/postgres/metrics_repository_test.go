@@ -1,3 +1,3 @@
-package postgres
+package postgresrepo
 
 //TODO: mock pgSql

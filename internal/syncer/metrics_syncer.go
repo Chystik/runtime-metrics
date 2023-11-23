@@ -8,16 +8,15 @@ import (
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
-	"github.com/Chystik/runtime-metrics/internal/infrastructure/storage"
 	"github.com/Chystik/runtime-metrics/internal/models"
-	metricsservice "github.com/Chystik/runtime-metrics/internal/service/server"
+	"github.com/Chystik/runtime-metrics/internal/service"
 )
 
 var once sync.Once
 
 type syncer struct {
-	src  metricsservice.MetricsRepository
-	dst  storage.MetricsStorage
+	src  service.MetricsRepository
+	dst  service.MetricsStorage
 	tick chan struct{}
 	i    time.Duration
 }
@@ -29,7 +28,7 @@ func New(cfg *config.ServerConfig) *syncer {
 	}
 }
 
-func (s *syncer) Initialize(cfg *config.ServerConfig, src metricsservice.MetricsRepository, dst storage.MetricsStorage) error {
+func (s *syncer) Initialize(cfg *config.ServerConfig, src service.MetricsRepository, dst service.MetricsStorage) error {
 	s.src = src
 	s.dst = dst
 
@@ -69,8 +68,8 @@ func (s *syncer) GetAll(ctx context.Context) ([]models.Metric, error) {
 	return s.src.GetAll(ctx)
 }
 
-func (s *syncer) UpdateAll(ctx context.Context, metrics []models.Metric) error {
-	err := s.src.UpdateAll(ctx, metrics)
+func (s *syncer) UpdateList(ctx context.Context, metrics []models.Metric) error {
+	err := s.src.UpdateList(ctx, metrics)
 	if err != nil {
 		return nil
 	}

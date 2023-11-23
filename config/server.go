@@ -17,6 +17,7 @@ type (
 		Restore         bool   `env:"RESTORE"`
 		DBDsn           string `env:"DATABASE_DSN"`
 		SHAkey          string `env:"KEY"`
+		ProfileConfig   ProfileConfig
 	}
 
 	StoreInterval time.Duration
@@ -29,6 +30,7 @@ func NewServerCfg() *ServerConfig {
 		StoreInterval:   StoreInterval(300 * time.Second),
 		FileStoragePath: "/tmp/metrics-db.json",
 		Restore:         true,
+		ProfileConfig:   ProfileConfig{},
 	}
 
 	return cfg

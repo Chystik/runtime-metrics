@@ -1,1 +1,1 @@
-drop table if exist praktikum.metrics
+drop table if exists praktikum.metrics

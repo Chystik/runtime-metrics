@@ -5,25 +5,22 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
-	"github.com/Chystik/runtime-metrics/internal/adapters"
-	"github.com/Chystik/runtime-metrics/internal/adapters/db"
 	handlers "github.com/Chystik/runtime-metrics/internal/adapters/rest_api_handlers"
-	"github.com/Chystik/runtime-metrics/internal/compressor"
-	"github.com/Chystik/runtime-metrics/internal/hasher"
-	memstorage "github.com/Chystik/runtime-metrics/internal/infrastructure/repository/mem_storage"
-	"github.com/Chystik/runtime-metrics/internal/infrastructure/repository/postgres"
+
+	"github.com/Chystik/runtime-metrics/internal/infrastructure/repository/inmemory"
+	postgresrepo "github.com/Chystik/runtime-metrics/internal/infrastructure/repository/postgres"
 	localfs "github.com/Chystik/runtime-metrics/internal/infrastructure/storage/local"
-	"github.com/Chystik/runtime-metrics/internal/logger"
-	"github.com/Chystik/runtime-metrics/internal/retryer"
+	"github.com/Chystik/runtime-metrics/internal/service"
 	metricsservice "github.com/Chystik/runtime-metrics/internal/service/server"
 	"github.com/Chystik/runtime-metrics/internal/syncer"
-	"github.com/Chystik/runtime-metrics/internal/transport/restapi"
+	"github.com/Chystik/runtime-metrics/pkg/httpserver"
+	"github.com/Chystik/runtime-metrics/pkg/logger"
+	"github.com/Chystik/runtime-metrics/pkg/postgres"
+	"github.com/Chystik/runtime-metrics/pkg/retryer"
 
-	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -38,7 +35,11 @@ const (
 	logDBDisconnect                = "Graceful close connection for DB client complete."
 )
 
-func Server(cfg *config.ServerConfig, quit chan os.Signal) {
+const (
+	defaultDBPingTimeout = 3 * time.Second
+)
+
+func Server(ctx context.Context, cfg *config.ServerConfig) {
 	// logger
 	logger, err := logger.Initialize(cfg.LogLevel, "./server.log")
 	if err != nil {
@@ -46,15 +47,15 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	}
 
 	// repository
-	var meticsRepository metricsservice.MetricsRepository
-	var pgClient adapters.PgClient
+	var meticsRepository service.MetricsRepository
+	var pgClient *postgres.Postgres
 	repoWithSyncer := syncer.New(cfg)
 
-	inMemRepo := memstorage.New(cfg)
+	inMemRepo := inmemory.NewMetricsRepo(cfg)
 
 	if cfg.DBDsn != "" {
 		// postgres
-		pgClient, err = db.NewPgClient(cfg, logger.Logger)
+		pgClient, err = postgres.New(cfg.DBDsn, logger)
 		if err != nil {
 			logger.Fatal(err.Error())
 		}
@@ -62,7 +63,7 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
-		db, err := pgClient.Connect(ctx)
+		err = pgClient.Connect(ctx)
 		if err != nil {
 			logger.Fatal(err.Error())
 		}
@@ -77,13 +78,13 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 			3,
 			time.Duration(time.Second),
 			time.Duration(2*time.Second),
-			logger.Logger,
+			logger,
 		)
 
-		meticsRepository = postgres.NewMetricsRepo(db, r, logger.Logger)
+		meticsRepository = postgresrepo.NewMetricsRepo(pgClient.DB, r, logger)
 	} else if cfg.FileStoragePath != "" {
 		// fs storage
-		localStorage, err := localfs.New(cfg, inMemRepo)
+		localStorage, err := localfs.NewMetricsStorage(cfg, inMemRepo)
 		if err != nil {
 			logger.Fatal(err.Error())
 		}
@@ -108,22 +109,18 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 	// services
 	metricsService := metricsservice.New(meticsRepository)
 
-	// hasher
-	h := hasher.NewHasher(cfg.SHAkey, "HashSHA256")
-
 	// router
-	router := chi.NewRouter()
-	router.Use(logger.WithLogging)
-	router.Use(h.WithHasher)
-	router.Use(compressor.GzipMiddleware)
-	router.Use(middleware.Recoverer)
-
-	// handlers
-	metricHandlers := handlers.NewMetricsHandlers(metricsService)
-	handlers.RegisterHandlers(router, metricHandlers, pgClient)
+	handler := chi.NewRouter()
+	handlers.NewRouter(
+		cfg,
+		handler,
+		metricsService,
+		pgClient,
+		defaultDBPingTimeout,
+		logger)
 
 	// http server
-	server := restapi.NewServer(cfg, router)
+	server := httpserver.NewServer(handler, httpserver.Address(cfg.Address))
 	go func() {
 		logger.Info(fmt.Sprintf(logHTTPServerStart, cfg.Address))
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
@@ -132,7 +129,9 @@ func Server(cfg *config.ServerConfig, quit chan os.Signal) {
 		logger.Info(logHTTPServerStop)
 	}()
 
-	<-quit
+	// interrupt signal
+	<-ctx.Done()
+
 	logger.Info(logSignalInterrupt)
 	ctxShutdown, shutdown := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdown()

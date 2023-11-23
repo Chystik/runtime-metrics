@@ -1,4 +1,8 @@
-package agenthttpclient
+// Used to make API calls to the metrics server.
+//
+// Sends metrics to the metrics server with or without data compressing.
+// Can send metrics in batch or one at a time.
+package agentapiclient
 
 import (
 	"bytes"
@@ -14,27 +18,30 @@ import (
 
 	"github.com/Chystik/runtime-metrics/config"
 	"github.com/Chystik/runtime-metrics/internal/models"
+	"github.com/Chystik/runtime-metrics/internal/service"
 )
 
 var (
 	errBadStatusCode = "resp status code: %s"
 )
 
-type agentHTTPClient struct {
-	client  *http.Client
+type agentAPIClient struct {
+	client  service.HTTPClient
 	address string
 	shaKey  string
 }
 
-func New(c *http.Client, s *config.AgentConfig) *agentHTTPClient {
-	return &agentHTTPClient{
+// New creates new agent API client, wich sends http requests to the metrics server
+func New(c service.HTTPClient, s *config.AgentConfig) *agentAPIClient {
+	return &agentAPIClient{
 		client:  c,
 		address: s.Address,
 		shaKey:  s.SHAkey,
 	}
 }
 
-func (ac *agentHTTPClient) ReportMetrics(metrics map[string]interface{}) error {
+// ReportMetrics sends metrics one by one to the metrics server
+func (ac *agentAPIClient) ReportMetrics(ctx context.Context, metrics map[string]interface{}) error {
 	for name, value := range metrics {
 		var mType string
 
@@ -49,7 +56,7 @@ func (ac *agentHTTPClient) ReportMetrics(metrics map[string]interface{}) error {
 
 		url := fmt.Sprintf("http://%s/update/%s/%s/%v", ac.address, mType, name, value)
 
-		request, err := http.NewRequestWithContext(context.TODO(), http.MethodPost, url, nil)
+		request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
 		if err != nil {
 			return err
 		}
@@ -63,7 +70,9 @@ func (ac *agentHTTPClient) ReportMetrics(metrics map[string]interface{}) error {
 	return nil
 }
 
-func (ac *agentHTTPClient) ReportMetricsJSON(metrics map[string]models.Metric) error {
+// ReportMetricsJSON sends all metrics one by one to the metrics server using the JSON data format.
+// It also compresses all data sent.
+func (ac *agentAPIClient) ReportMetricsJSON(ctx context.Context, metrics map[string]models.Metric) error {
 	for _, metric := range metrics {
 		var buf, reqBody bytes.Buffer
 
@@ -84,7 +93,7 @@ func (ac *agentHTTPClient) ReportMetricsJSON(metrics map[string]models.Metric) e
 			return err
 		}
 
-		req, err := http.NewRequestWithContext(context.TODO(), http.MethodPost, url, &reqBody)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, &reqBody)
 		if err != nil {
 			return err
 		}
@@ -116,7 +125,9 @@ func (ac *agentHTTPClient) ReportMetricsJSON(metrics map[string]models.Metric) e
 	return nil
 }
 
-func (ac *agentHTTPClient) ReportMetricsJSONBatch(ctx context.Context, metrics map[string]models.Metric) error {
+// ReportMetricsJSONBatch sends all metrics in batch to the metrics server using JSON data format.
+// It also compresses all data sent.
+func (ac *agentAPIClient) ReportMetricsJSONBatch(ctx context.Context, metrics map[string]models.Metric) error {
 	var ms []models.Metric
 	var buf, reqBody bytes.Buffer
 
