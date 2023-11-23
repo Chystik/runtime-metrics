@@ -9,7 +9,8 @@ import (
 
 	"github.com/Chystik/runtime-metrics/config"
 	handlers "github.com/Chystik/runtime-metrics/internal/adapters/rest_api_handlers"
-	memstorage "github.com/Chystik/runtime-metrics/internal/infrastructure/repository/mem_storage"
+
+	"github.com/Chystik/runtime-metrics/internal/infrastructure/repository/inmemory"
 	postgresrepo "github.com/Chystik/runtime-metrics/internal/infrastructure/repository/postgres"
 	localfs "github.com/Chystik/runtime-metrics/internal/infrastructure/storage/local"
 	"github.com/Chystik/runtime-metrics/internal/service"
@@ -50,7 +51,7 @@ func Server(ctx context.Context, cfg *config.ServerConfig) {
 	var pgClient *postgres.Postgres
 	repoWithSyncer := syncer.New(cfg)
 
-	inMemRepo := memstorage.New(cfg)
+	inMemRepo := inmemory.NewMetricsRepo(cfg)
 
 	if cfg.DBDsn != "" {
 		// postgres
@@ -83,7 +84,7 @@ func Server(ctx context.Context, cfg *config.ServerConfig) {
 		meticsRepository = postgresrepo.NewMetricsRepo(pgClient.DB, r, logger)
 	} else if cfg.FileStoragePath != "" {
 		// fs storage
-		localStorage, err := localfs.New(cfg, inMemRepo)
+		localStorage, err := localfs.NewMetricsStorage(cfg, inMemRepo)
 		if err != nil {
 			logger.Fatal(err.Error())
 		}

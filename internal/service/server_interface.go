@@ -21,3 +21,9 @@ type MetricsRepository interface {
 	Get(context.Context, models.Metric) (models.Metric, error)
 	GetAll(context.Context) ([]models.Metric, error)
 }
+
+type MetricsStorage interface {
+	Read() error
+	Write() error
+	CloseFile() error
+}

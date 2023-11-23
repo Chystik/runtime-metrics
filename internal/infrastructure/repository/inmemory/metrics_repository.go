@@ -1,4 +1,4 @@
-package memstorage
+package inmemory
 
 import (
 	"context"
@@ -14,50 +14,50 @@ var (
 	ErrNotFoundMetric = errors.New("not found in repository")
 )
 
-type MemStorage struct {
-	Data map[string]models.Metric
+type memStorage struct {
+	data map[string]models.Metric
 	Mu   sync.RWMutex
 }
 
-func New(cfg *config.ServerConfig) *MemStorage {
-	return &MemStorage{Data: make(map[string]models.Metric)}
+func NewMetricsRepo(cfg *config.ServerConfig) *memStorage {
+	return &memStorage{data: make(map[string]models.Metric)}
 }
 
-func (ms *MemStorage) UpdateGauge(ctx context.Context, metric models.Metric) error {
+func (ms *memStorage) UpdateGauge(ctx context.Context, metric models.Metric) error {
 	ms.Mu.Lock()
 	defer ms.Mu.Unlock()
 
-	m, ok := ms.Data[metric.ID]
+	m, ok := ms.data[metric.ID]
 	if !ok {
-		ms.Data[metric.ID] = metric
+		ms.data[metric.ID] = metric
 	} else {
 		m.Value = metric.Value
-		ms.Data[metric.ID] = m
+		ms.data[metric.ID] = m
 	}
 
 	return nil
 }
 
-func (ms *MemStorage) UpdateCounter(ctx context.Context, metric models.Metric) error {
+func (ms *memStorage) UpdateCounter(ctx context.Context, metric models.Metric) error {
 	ms.Mu.Lock()
 	defer ms.Mu.Unlock()
 
-	m, ok := ms.Data[metric.ID]
+	m, ok := ms.data[metric.ID]
 	if !ok {
-		ms.Data[metric.ID] = metric
+		ms.data[metric.ID] = metric
 	} else {
 		*m.Delta = *metric.Delta + *m.Delta
-		ms.Data[metric.ID] = m
+		ms.data[metric.ID] = m
 	}
 
 	return nil
 }
 
-func (ms *MemStorage) Get(ctx context.Context, metric models.Metric) (models.Metric, error) {
+func (ms *memStorage) Get(ctx context.Context, metric models.Metric) (models.Metric, error) {
 	ms.Mu.RLock()
 	defer ms.Mu.RUnlock()
 
-	m, ok := ms.Data[metric.ID]
+	m, ok := ms.data[metric.ID]
 	if !ok {
 		return models.Metric{ID: metric.ID, MType: "", Delta: nil, Value: nil}, fmt.Errorf("metric with ID %s %w", metric.ID, ErrNotFoundMetric)
 	}
@@ -65,10 +65,10 @@ func (ms *MemStorage) Get(ctx context.Context, metric models.Metric) (models.Met
 	return m, nil
 }
 
-func (ms *MemStorage) GetAll(ctx context.Context) ([]models.Metric, error) {
+func (ms *memStorage) GetAll(ctx context.Context) ([]models.Metric, error) {
 	var metrics []models.Metric
 
-	for _, v := range ms.Data {
+	for _, v := range ms.data {
 		ms.Mu.RLock()
 		m := v
 		ms.Mu.RUnlock()
@@ -78,10 +78,10 @@ func (ms *MemStorage) GetAll(ctx context.Context) ([]models.Metric, error) {
 	return metrics, nil
 }
 
-func (ms *MemStorage) UpdateAll(ctx context.Context, metrics []models.Metric) error {
+func (ms *memStorage) UpdateAll(ctx context.Context, metrics []models.Metric) error {
 	for _, m := range metrics {
 		ms.Mu.Lock()
-		ms.Data[m.ID] = m
+		ms.data[m.ID] = m
 		ms.Mu.Unlock()
 	}
 
