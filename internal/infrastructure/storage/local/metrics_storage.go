@@ -47,7 +47,7 @@ func (ls *localStorage) Read() error {
 		return err
 	}
 
-	return ls.metricsRepo.UpdateAll(context.Background(), m)
+	return ls.metricsRepo.UpdateList(context.Background(), m)
 }
 
 func (ls *localStorage) Write() error {

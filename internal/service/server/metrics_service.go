@@ -23,14 +23,14 @@ func (ss *metricsService) UpdateCounter(ctx context.Context, metric models.Metri
 	return ss.metricsRepo.UpdateCounter(ctx, metric)
 }
 
-func (ss *metricsService) GetMetric(ctx context.Context, metric models.Metric) (models.Metric, error) {
+func (ss *metricsService) Get(ctx context.Context, metric models.Metric) (models.Metric, error) {
 	return ss.metricsRepo.Get(ctx, metric)
 }
 
-func (ss *metricsService) GetAllMetrics(ctx context.Context) ([]models.Metric, error) {
+func (ss *metricsService) GetAll(ctx context.Context) ([]models.Metric, error) {
 	return ss.metricsRepo.GetAll(ctx)
 }
 
-func (ss *metricsService) UpdateAll(ctx context.Context, metrics []models.Metric) error {
-	return ss.metricsRepo.UpdateAll(ctx, metrics)
+func (ss *metricsService) UpdateList(ctx context.Context, metrics []models.Metric) error {
+	return ss.metricsRepo.UpdateList(ctx, metrics)
 }

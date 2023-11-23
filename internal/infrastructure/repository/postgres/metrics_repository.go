@@ -112,7 +112,7 @@ func (pg *pgRepo) GetAll(ctx context.Context) ([]models.Metric, error) {
 	return metrics, nil
 }
 
-func (pg *pgRepo) UpdateAll(ctx context.Context, metrics []models.Metric) (err error) {
+func (pg *pgRepo) UpdateList(ctx context.Context, metrics []models.Metric) (err error) {
 	var tx *sql.Tx
 
 	sort.Slice(metrics, func(i, j int) bool { // prevent error on concurrent update: deadlock detected (SQLSTATE 40P01)

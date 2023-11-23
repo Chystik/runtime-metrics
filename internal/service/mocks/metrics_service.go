@@ -22,8 +22,61 @@ func (_m *MetricsService) EXPECT() *MetricsService_Expecter {
 	return &MetricsService_Expecter{mock: &_m.Mock}
 }
 
-// GetAllMetrics provides a mock function with given fields: _a0
-func (_m *MetricsService) GetAllMetrics(_a0 context.Context) ([]models.Metric, error) {
+// Get provides a mock function with given fields: _a0, _a1
+func (_m *MetricsService) Get(_a0 context.Context, _a1 models.Metric) (models.Metric, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 models.Metric
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, models.Metric) (models.Metric, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, models.Metric) models.Metric); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(models.Metric)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, models.Metric) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MetricsService_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
+type MetricsService_Get_Call struct {
+	*mock.Call
+}
+
+// Get is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 models.Metric
+func (_e *MetricsService_Expecter) Get(_a0 interface{}, _a1 interface{}) *MetricsService_Get_Call {
+	return &MetricsService_Get_Call{Call: _e.mock.On("Get", _a0, _a1)}
+}
+
+func (_c *MetricsService_Get_Call) Run(run func(_a0 context.Context, _a1 models.Metric)) *MetricsService_Get_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(models.Metric))
+	})
+	return _c
+}
+
+func (_c *MetricsService_Get_Call) Return(_a0 models.Metric, _a1 error) *MetricsService_Get_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MetricsService_Get_Call) RunAndReturn(run func(context.Context, models.Metric) (models.Metric, error)) *MetricsService_Get_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetAll provides a mock function with given fields: _a0
+func (_m *MetricsService) GetAll(_a0 context.Context) ([]models.Metric, error) {
 	ret := _m.Called(_a0)
 
 	var r0 []models.Metric
@@ -48,126 +101,30 @@ func (_m *MetricsService) GetAllMetrics(_a0 context.Context) ([]models.Metric, e
 	return r0, r1
 }
 
-// MetricsService_GetAllMetrics_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllMetrics'
-type MetricsService_GetAllMetrics_Call struct {
+// MetricsService_GetAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAll'
+type MetricsService_GetAll_Call struct {
 	*mock.Call
 }
 
-// GetAllMetrics is a helper method to define mock.On call
+// GetAll is a helper method to define mock.On call
 //   - _a0 context.Context
-func (_e *MetricsService_Expecter) GetAllMetrics(_a0 interface{}) *MetricsService_GetAllMetrics_Call {
-	return &MetricsService_GetAllMetrics_Call{Call: _e.mock.On("GetAllMetrics", _a0)}
+func (_e *MetricsService_Expecter) GetAll(_a0 interface{}) *MetricsService_GetAll_Call {
+	return &MetricsService_GetAll_Call{Call: _e.mock.On("GetAll", _a0)}
 }
 
-func (_c *MetricsService_GetAllMetrics_Call) Run(run func(_a0 context.Context)) *MetricsService_GetAllMetrics_Call {
+func (_c *MetricsService_GetAll_Call) Run(run func(_a0 context.Context)) *MetricsService_GetAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context))
 	})
 	return _c
 }
 
-func (_c *MetricsService_GetAllMetrics_Call) Return(_a0 []models.Metric, _a1 error) *MetricsService_GetAllMetrics_Call {
+func (_c *MetricsService_GetAll_Call) Return(_a0 []models.Metric, _a1 error) *MetricsService_GetAll_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MetricsService_GetAllMetrics_Call) RunAndReturn(run func(context.Context) ([]models.Metric, error)) *MetricsService_GetAllMetrics_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetMetric provides a mock function with given fields: _a0, _a1
-func (_m *MetricsService) GetMetric(_a0 context.Context, _a1 models.Metric) (models.Metric, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 models.Metric
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, models.Metric) (models.Metric, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, models.Metric) models.Metric); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Get(0).(models.Metric)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, models.Metric) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MetricsService_GetMetric_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMetric'
-type MetricsService_GetMetric_Call struct {
-	*mock.Call
-}
-
-// GetMetric is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 models.Metric
-func (_e *MetricsService_Expecter) GetMetric(_a0 interface{}, _a1 interface{}) *MetricsService_GetMetric_Call {
-	return &MetricsService_GetMetric_Call{Call: _e.mock.On("GetMetric", _a0, _a1)}
-}
-
-func (_c *MetricsService_GetMetric_Call) Run(run func(_a0 context.Context, _a1 models.Metric)) *MetricsService_GetMetric_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(models.Metric))
-	})
-	return _c
-}
-
-func (_c *MetricsService_GetMetric_Call) Return(_a0 models.Metric, _a1 error) *MetricsService_GetMetric_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MetricsService_GetMetric_Call) RunAndReturn(run func(context.Context, models.Metric) (models.Metric, error)) *MetricsService_GetMetric_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// UpdateAll provides a mock function with given fields: _a0, _a1
-func (_m *MetricsService) UpdateAll(_a0 context.Context, _a1 []models.Metric) error {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []models.Metric) error); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MetricsService_UpdateAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateAll'
-type MetricsService_UpdateAll_Call struct {
-	*mock.Call
-}
-
-// UpdateAll is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 []models.Metric
-func (_e *MetricsService_Expecter) UpdateAll(_a0 interface{}, _a1 interface{}) *MetricsService_UpdateAll_Call {
-	return &MetricsService_UpdateAll_Call{Call: _e.mock.On("UpdateAll", _a0, _a1)}
-}
-
-func (_c *MetricsService_UpdateAll_Call) Run(run func(_a0 context.Context, _a1 []models.Metric)) *MetricsService_UpdateAll_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]models.Metric))
-	})
-	return _c
-}
-
-func (_c *MetricsService_UpdateAll_Call) Return(_a0 error) *MetricsService_UpdateAll_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MetricsService_UpdateAll_Call) RunAndReturn(run func(context.Context, []models.Metric) error) *MetricsService_UpdateAll_Call {
+func (_c *MetricsService_GetAll_Call) RunAndReturn(run func(context.Context) ([]models.Metric, error)) *MetricsService_GetAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -254,6 +211,49 @@ func (_c *MetricsService_UpdateGauge_Call) Return(_a0 error) *MetricsService_Upd
 }
 
 func (_c *MetricsService_UpdateGauge_Call) RunAndReturn(run func(context.Context, models.Metric) error) *MetricsService_UpdateGauge_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateList provides a mock function with given fields: _a0, _a1
+func (_m *MetricsService) UpdateList(_a0 context.Context, _a1 []models.Metric) error {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, []models.Metric) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MetricsService_UpdateList_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateList'
+type MetricsService_UpdateList_Call struct {
+	*mock.Call
+}
+
+// UpdateList is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 []models.Metric
+func (_e *MetricsService_Expecter) UpdateList(_a0 interface{}, _a1 interface{}) *MetricsService_UpdateList_Call {
+	return &MetricsService_UpdateList_Call{Call: _e.mock.On("UpdateList", _a0, _a1)}
+}
+
+func (_c *MetricsService_UpdateList_Call) Run(run func(_a0 context.Context, _a1 []models.Metric)) *MetricsService_UpdateList_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]models.Metric))
+	})
+	return _c
+}
+
+func (_c *MetricsService_UpdateList_Call) Return(_a0 error) *MetricsService_UpdateList_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MetricsService_UpdateList_Call) RunAndReturn(run func(context.Context, []models.Metric) error) *MetricsService_UpdateList_Call {
 	_c.Call.Return(run)
 	return _c
 }

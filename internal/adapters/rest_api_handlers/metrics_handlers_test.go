@@ -351,7 +351,7 @@ func Test_metricsHandlers_UpdateMetricsJSON(t *testing.T) {
 				err = errors.New("some error")
 			}
 
-			mks.metricsService.On("UpdateAll", mock.Anything, mock.Anything).Return(err)
+			mks.metricsService.On("UpdateList", mock.Anything, mock.Anything).Return(err)
 			handlers.UpdateMetricsJSON(rec, req)
 
 			res := rec.Result()
@@ -412,7 +412,7 @@ func Test_metricsHandlers_GetMetricJSON(t *testing.T) {
 				err = errors.New("some error")
 			}
 
-			mks.metricsService.On("GetMetric", mock.Anything, mock.Anything).Return(tt.metric, err)
+			mks.metricsService.On("Get", mock.Anything, mock.Anything).Return(tt.metric, err)
 			handlers.GetMetricJSON(rec, req)
 
 			res := rec.Result()
@@ -516,7 +516,7 @@ func Test_metricsHandlers_GetMetric(t *testing.T) {
 				err = errors.New("error")
 			}
 
-			mks.metricsService.On("GetMetric", mock.Anything, mock.Anything).Return(models.Metric{Value: new(float64), Delta: new(int64)}, err)
+			mks.metricsService.On("Get", mock.Anything, mock.Anything).Return(models.Metric{Value: new(float64), Delta: new(int64)}, err)
 			handlers.GetMetric(rec, req)
 
 			res := rec.Result()
@@ -558,7 +558,7 @@ func Test_metricsHandlers_AllMetrics(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			expMetrics := generateMetrics(10)
 
-			mks.metricsService.On("GetAllMetrics", mock.Anything).Return(expMetrics, nil)
+			mks.metricsService.On("GetAll", mock.Anything).Return(expMetrics, nil)
 			handlers.AllMetrics(tt.args.w, tt.args.r)
 
 			res := tt.args.w.Result()

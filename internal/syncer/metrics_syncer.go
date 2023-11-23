@@ -68,8 +68,8 @@ func (s *syncer) GetAll(ctx context.Context) ([]models.Metric, error) {
 	return s.src.GetAll(ctx)
 }
 
-func (s *syncer) UpdateAll(ctx context.Context, metrics []models.Metric) error {
-	err := s.src.UpdateAll(ctx, metrics)
+func (s *syncer) UpdateList(ctx context.Context, metrics []models.Metric) error {
+	err := s.src.UpdateList(ctx, metrics)
 	if err != nil {
 		return nil
 	}

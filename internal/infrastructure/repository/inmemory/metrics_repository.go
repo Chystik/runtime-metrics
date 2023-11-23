@@ -78,7 +78,7 @@ func (ms *memStorage) GetAll(ctx context.Context) ([]models.Metric, error) {
 	return metrics, nil
 }
 
-func (ms *memStorage) UpdateAll(ctx context.Context, metrics []models.Metric) error {
+func (ms *memStorage) UpdateList(ctx context.Context, metrics []models.Metric) error {
 	for _, m := range metrics {
 		ms.Mu.Lock()
 		ms.data[m.ID] = m

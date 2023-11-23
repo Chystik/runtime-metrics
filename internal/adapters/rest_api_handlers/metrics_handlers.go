@@ -133,7 +133,7 @@ func (mh *metricsHandlers) GetMetric(w http.ResponseWriter, r *http.Request) {
 	metricName = path[1]
 	metricType = path[0]
 
-	metric, err = mh.metricsService.GetMetric(r.Context(), models.Metric{ID: metricName, MType: metricType})
+	metric, err = mh.metricsService.Get(r.Context(), models.Metric{ID: metricName, MType: metricType})
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -207,7 +207,7 @@ func (mh *metricsHandlers) UpdateMetricsJSON(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = mh.metricsService.UpdateAll(r.Context(), metrics)
+	err = mh.metricsService.UpdateList(r.Context(), metrics)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -230,7 +230,7 @@ func (mh *metricsHandlers) GetMetricJSON(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	m, err := mh.metricsService.GetMetric(r.Context(), metric)
+	m, err := mh.metricsService.Get(r.Context(), metric)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -262,7 +262,7 @@ func (mh *metricsHandlers) AllMetrics(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	m, err := mh.metricsService.GetAllMetrics(r.Context())
+	m, err := mh.metricsService.GetAll(r.Context())
 	if err != nil {
 		log.Println(err)
 	}
