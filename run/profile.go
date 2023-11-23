@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"runtime/pprof"
+	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
 )
@@ -39,8 +40,17 @@ func (p *profile) Run(ctx context.Context) error {
 		return err
 	}
 
-	// interrupt signal
-	<-ctx.Done()
+	// waiting interrupt signal or 10 seconds
+	timer := time.NewTimer(10 * time.Second)
+loop:
+	for {
+		select {
+		case <-ctx.Done():
+			break loop
+		case <-timer.C:
+			break loop
+		}
+	}
 
 	pprof.StopCPUProfile()
 	err = p.cpu.Close()

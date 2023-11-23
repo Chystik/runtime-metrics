@@ -22,7 +22,7 @@ func NewRouter(
 	// middleware
 	router.Use(md.MidLogger(logger).WithLogging)
 	router.Use(md.NewHasher(cfg.SHAkey, "HashSHA256").WithHasher)
-	router.Use(md.GzipMiddleware)
+	router.Use(md.GzipPoolMiddleware())
 	router.Use(middleware.Recoverer)
 
 	// routes
