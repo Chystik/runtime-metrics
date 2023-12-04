@@ -82,7 +82,7 @@ var nextHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 	w.Write(body.Bytes())
 })
 
-// mockRequest makes test request using compressor middleware.
+// makeRequest makes test request using compressor middleware.
 // it panics if error occurs
 func makeRequest(h http.Handler, b []byte) {
 	var body bytes.Buffer
