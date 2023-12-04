@@ -83,7 +83,7 @@ func (p *gzWriterPool) gzipPoolMiddleware(next http.Handler) http.Handler {
 			cw := p.newCompressPWriter(w)
 			// меняем оригинальный http.ResponseWriter на новый
 			ow = cw
-			defer cw.zw.Reset(io.Discard)
+			//defer cw.zw.Reset(io.Discard)
 			defer p.gz.Put(cw.zw)
 			// не забываем отправить клиенту все сжатые данные после завершения middleware
 			defer cw.Close()
