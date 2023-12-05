@@ -60,10 +60,10 @@ func Server(ctx context.Context, cfg *config.ServerConfig) {
 			logger.Fatal(err.Error())
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		ctxPing, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
-		err = pgClient.Connect(ctx)
+		err = pgClient.Connect(ctxPing)
 		if err != nil {
 			logger.Fatal(err.Error())
 		}
