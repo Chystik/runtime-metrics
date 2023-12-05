@@ -53,7 +53,7 @@ func BenchmarkPoolWriters(b *testing.B) {
 	}
 }
 
-var nextHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+var nextCompressorHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	contentEncoding := r.Header.Get("Content-Encoding")
 	sendsGzip := strings.Contains(contentEncoding, "gzip")
 
@@ -82,9 +82,9 @@ var nextHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 	w.Write(body.Bytes())
 })
 
-// makeRequest makes test request using compressor middleware.
+// makeCompressorRequest makes test request using compressor middleware.
 // it panics if error occurs
-func makeRequest(h http.Handler, b []byte) {
+func makeCompressorRequest(h http.Handler, b []byte) {
 	var body bytes.Buffer
 	_, _ = body.Write(b)
 
@@ -99,11 +99,11 @@ func makeRequest(h http.Handler, b []byte) {
 
 	res := rec.Result()
 
+	defer res.Body.Close()
+
 	if http.StatusOK != res.StatusCode {
 		panic("expect http.StatusOK")
 	}
-
-	defer res.Body.Close()
 
 	reader, err := gzip.NewReader(res.Body)
 	if err != nil {
@@ -123,7 +123,7 @@ func makeRequest(h http.Handler, b []byte) {
 
 func BenchmarkCompressor(b *testing.B) {
 	b.Run("Normal", func(b *testing.B) {
-		handlerToTest := GzipMiddleware(nextHandler)
+		handlerToTest := GzipMiddleware(nextCompressorHandler)
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
@@ -132,14 +132,14 @@ func BenchmarkCompressor(b *testing.B) {
 			b.StartTimer()
 
 			for i := range reqMetrics {
-				makeRequest(handlerToTest, reqMetrics[i].body)
+				makeCompressorRequest(handlerToTest, reqMetrics[i].body)
 			}
 		}
 	})
 
 	b.Run("Pool", func(b *testing.B) {
 		gz := GzipPoolMiddleware()
-		handlerToTest := gz(nextHandler)
+		handlerToTest := gz(nextCompressorHandler)
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
@@ -148,7 +148,7 @@ func BenchmarkCompressor(b *testing.B) {
 			b.StartTimer()
 
 			for i := range reqMetrics {
-				makeRequest(handlerToTest, reqMetrics[i].body)
+				makeCompressorRequest(handlerToTest, reqMetrics[i].body)
 			}
 		}
 	})
@@ -156,7 +156,7 @@ func BenchmarkCompressor(b *testing.B) {
 
 func BenchmarkCompressorParallel(b *testing.B) {
 	b.Run("Normal", func(b *testing.B) {
-		handlerToTest := GzipMiddleware(nextHandler)
+		handlerToTest := GzipMiddleware(nextCompressorHandler)
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
@@ -170,7 +170,7 @@ func BenchmarkCompressorParallel(b *testing.B) {
 				i := i
 				go func() {
 					defer wg.Done()
-					makeRequest(handlerToTest, reqMetrics[i].body)
+					makeCompressorRequest(handlerToTest, reqMetrics[i].body)
 
 				}()
 			}
@@ -180,7 +180,7 @@ func BenchmarkCompressorParallel(b *testing.B) {
 
 	b.Run("Pool", func(b *testing.B) {
 		gz := GzipPoolMiddleware()
-		handlerToTest := gz(nextHandler)
+		handlerToTest := gz(nextCompressorHandler)
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
@@ -194,7 +194,7 @@ func BenchmarkCompressorParallel(b *testing.B) {
 				i := i
 				go func() {
 					defer wg.Done()
-					makeRequest(handlerToTest, reqMetrics[i].body)
+					makeCompressorRequest(handlerToTest, reqMetrics[i].body)
 				}()
 			}
 			wg.Wait()
@@ -273,4 +273,37 @@ func compressMetrics(metrics []models.Metric) []compressedMetric {
 	}
 
 	return m
+}
+
+func TestGzipMiddleware(t *testing.T) {
+	type args struct {
+		handlerToTest http.Handler
+		testData      []compressedMetric
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "test compressor with 1000 requests",
+			args: args{
+				handlerToTest: GzipMiddleware(nextCompressorHandler),
+				testData:      compressMetrics(generateMetrics(1000)),
+			},
+		},
+		{
+			name: "test compressor pool with 1000 requests",
+			args: args{
+				handlerToTest: GzipPoolMiddleware()(nextCompressorHandler),
+				testData:      compressMetrics(generateMetrics(1000)),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for _, d := range tt.args.testData {
+				makeCompressorRequest(tt.args.handlerToTest, d.body)
+			}
+		})
+	}
 }

@@ -71,17 +71,17 @@
 				
 				<option value="file7">github.com/Chystik/runtime-metrics/internal/infrastructure/storage/local/metrics_storage.go (0.0%)</option>
 				
-				<option value="file8">github.com/Chystik/runtime-metrics/internal/middleware/compressor.go (0.0%)</option>
+				<option value="file8">github.com/Chystik/runtime-metrics/internal/middleware/compressor.go (86.8%)</option>
 				
-				<option value="file9">github.com/Chystik/runtime-metrics/internal/middleware/compressor_pool.go (0.0%)</option>
+				<option value="file9">github.com/Chystik/runtime-metrics/internal/middleware/compressor_pool.go (91.7%)</option>
 				
-				<option value="file10">github.com/Chystik/runtime-metrics/internal/middleware/hasher.go (0.0%)</option>
+				<option value="file10">github.com/Chystik/runtime-metrics/internal/middleware/hasher.go (83.9%)</option>
 				
-				<option value="file11">github.com/Chystik/runtime-metrics/internal/middleware/logger.go (0.0%)</option>
+				<option value="file11">github.com/Chystik/runtime-metrics/internal/middleware/logger.go (94.1%)</option>
 				
 				<option value="file12">github.com/Chystik/runtime-metrics/internal/service/agent/metrics_service.go (98.0%)</option>
 				
-				<option value="file13">github.com/Chystik/runtime-metrics/internal/service/server/metrics_service.go (83.3%)</option>
+				<option value="file13">github.com/Chystik/runtime-metrics/internal/service/server/metrics_service.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -779,10 +779,10 @@ func (mh *metricsHandlers) AllMetrics(w http.ResponseWriter, r *http.Request) <s
         <span class="cov1" title="1">for i := range m </span><span class="cov7" title="10">{
                 var v string
 
-                if m[i].Value != nil </span><span class="cov6" title="8">{
+                if m[i].Value != nil </span><span class="cov5" title="5">{
                         v = strconv.FormatFloat(*m[i].Value, 'f', -1, 64)
                 }</span>
-                <span class="cov7" title="10">if m[i].Delta != nil </span><span class="cov2" title="2">{
+                <span class="cov7" title="10">if m[i].Delta != nil </span><span class="cov5" title="5">{
                         v = strconv.FormatInt(*m[i].Delta, 10)
                 }</span>
 
@@ -1211,18 +1211,18 @@ type compressWriter struct {
         zw *gzip.Writer
 }
 
-func newCompressWriter(w http.ResponseWriter) *compressWriter <span class="cov0" title="0">{
+func newCompressWriter(w http.ResponseWriter) *compressWriter <span class="cov9" title="1000">{
         return &amp;compressWriter{
                 w:  w,
                 zw: gzip.NewWriter(w),
         }
 }</span>
 
-func (c *compressWriter) Header() http.Header <span class="cov0" title="0">{
+func (c *compressWriter) Header() http.Header <span class="cov10" title="2000">{
         return c.w.Header()
 }</span>
 
-func (c *compressWriter) Write(p []byte) (int, error) <span class="cov0" title="0">{
+func (c *compressWriter) Write(p []byte) (int, error) <span class="cov9" title="1000">{
         // сжимаем данные только для контента с типами application/json и text/html
         ct := c.w.Header().Get("Content-Type")
         supportsCTypes := strings.Contains(ct, "application/json") || strings.Contains(ct, "text/html")
@@ -1231,18 +1231,18 @@ func (c *compressWriter) Write(p []byte) (int, error) <span class="cov0" title="
                 return c.w.Write(p)
         }</span>
 
-        <span class="cov0" title="0">return c.zw.Write(p)</span>
+        <span class="cov9" title="1000">return c.zw.Write(p)</span>
 }
 
-func (c *compressWriter) WriteHeader(statusCode int) <span class="cov0" title="0">{
-        if statusCode &lt; 300 </span><span class="cov0" title="0">{
+func (c *compressWriter) WriteHeader(statusCode int) <span class="cov9" title="1000">{
+        if statusCode &lt; 300 </span><span class="cov9" title="1000">{
                 c.w.Header().Set("Content-Encoding", "gzip")
         }</span>
-        <span class="cov0" title="0">c.w.WriteHeader(statusCode)</span>
+        <span class="cov9" title="1000">c.w.WriteHeader(statusCode)</span>
 }
 
 // Close закрывает gzip.Writer и досылает все данные из буфера.
-func (c *compressWriter) Close() error <span class="cov0" title="0">{
+func (c *compressWriter) Close() error <span class="cov9" title="1000">{
         return c.zw.Close()
 }</span>
 
@@ -1253,31 +1253,31 @@ type compressReader struct {
         zr *gzip.Reader
 }
 
-func newCompressReader(r io.ReadCloser) (*compressReader, error) <span class="cov0" title="0">{
+func newCompressReader(r io.ReadCloser) (*compressReader, error) <span class="cov10" title="2000">{
         zr, err := gzip.NewReader(r)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
 
-        <span class="cov0" title="0">return &amp;compressReader{
+        <span class="cov10" title="2000">return &amp;compressReader{
                 r:  r,
                 zr: zr,
         }, nil</span>
 }
 
-func (c compressReader) Read(p []byte) (n int, err error) <span class="cov0" title="0">{
+func (c compressReader) Read(p []byte) (n int, err error) <span class="cov10" title="2000">{
         return c.zr.Read(p)
 }</span>
 
-func (c *compressReader) Close() error <span class="cov0" title="0">{
+func (c *compressReader) Close() error <span class="cov10" title="2000">{
         if err := c.r.Close(); err != nil </span><span class="cov0" title="0">{
                 return err
         }</span>
-        <span class="cov0" title="0">return c.zr.Close()</span>
+        <span class="cov10" title="2000">return c.zr.Close()</span>
 }
 
-func GzipMiddleware(next http.Handler) http.Handler <span class="cov0" title="0">{
-        gzipFn := func(w http.ResponseWriter, r *http.Request) </span><span class="cov0" title="0">{
+func GzipMiddleware(next http.Handler) http.Handler <span class="cov1" title="1">{
+        gzipFn := func(w http.ResponseWriter, r *http.Request) </span><span class="cov9" title="1000">{
                 // по умолчанию устанавливаем оригинальный http.ResponseWriter как тот,
                 // который будем передавать следующей функции
                 ow := w
@@ -1286,7 +1286,7 @@ func GzipMiddleware(next http.Handler) http.Handler <span class="cov0" title="0"
                 acceptEncoding := r.Header.Get("Accept-Encoding")
                 supportsGzip := strings.Contains(acceptEncoding, "gzip")
 
-                if supportsGzip </span><span class="cov0" title="0">{
+                if supportsGzip </span><span class="cov9" title="1000">{
                         // оборачиваем оригинальный http.ResponseWriter новым с поддержкой сжатия
                         cw := newCompressWriter(w)
                         // меняем оригинальный http.ResponseWriter на новый
@@ -1296,10 +1296,10 @@ func GzipMiddleware(next http.Handler) http.Handler <span class="cov0" title="0"
                 }</span>
 
                 // проверяем, что клиент отправил серверу сжатые данные в формате gzip
-                <span class="cov0" title="0">contentEncoding := r.Header.Get("Content-Encoding")
+                <span class="cov9" title="1000">contentEncoding := r.Header.Get("Content-Encoding")
                 sendsGzip := strings.Contains(contentEncoding, "gzip")
 
-                if sendsGzip </span><span class="cov0" title="0">{
+                if sendsGzip </span><span class="cov9" title="1000">{
                         // оборачиваем тело запроса в io.Reader с поддержкой декомпрессии
                         cr, err := newCompressReader(r.Body)
                         if err != nil </span><span class="cov0" title="0">{
@@ -1307,15 +1307,15 @@ func GzipMiddleware(next http.Handler) http.Handler <span class="cov0" title="0"
                                 return
                         }</span>
                         // меняем тело запроса на новое
-                        <span class="cov0" title="0">r.Body = cr
+                        <span class="cov9" title="1000">r.Body = cr
                         defer cr.Close()</span>
                 }
 
                 // передаём управление хендлеру
-                <span class="cov0" title="0">next.ServeHTTP(ow, r)</span>
+                <span class="cov9" title="1000">next.ServeHTTP(ow, r)</span>
 
         }
-        <span class="cov0" title="0">return http.HandlerFunc(gzipFn)</span>
+        <span class="cov1" title="1">return http.HandlerFunc(gzipFn)</span>
 }
 </pre>
 		
@@ -1340,18 +1340,18 @@ type gzWriterPool struct {
         gz sync.Pool
 }
 
-func GzipPoolMiddleware() func(http.Handler) http.Handler <span class="cov0" title="0">{
+func GzipPoolMiddleware() func(http.Handler) http.Handler <span class="cov1" title="1">{
         gzp := &amp;gzWriterPool{
                 gz: sync.Pool{
-                        New: func() any </span><span class="cov0" title="0">{
+                        New: func() any </span><span class="cov7" title="266">{
                                 return gzip.NewWriter(io.Discard)
                         }</span>,
                 },
         }
-        <span class="cov0" title="0">return gzp.gzipPoolMiddleware</span>
+        <span class="cov1" title="1">return gzp.gzipPoolMiddleware</span>
 }
 
-func (p *gzWriterPool) newCompressPWriter(w http.ResponseWriter) *compressPWriter <span class="cov0" title="0">{
+func (p *gzWriterPool) newCompressPWriter(w http.ResponseWriter) *compressPWriter <span class="cov9" title="1000">{
         gz, _ := p.gz.Get().(*gzip.Writer)
         gz.Reset(w)
 
@@ -1361,11 +1361,11 @@ func (p *gzWriterPool) newCompressPWriter(w http.ResponseWriter) *compressPWrite
         }
 }</span>
 
-func (c *compressPWriter) Header() http.Header <span class="cov0" title="0">{
+func (c *compressPWriter) Header() http.Header <span class="cov10" title="2000">{
         return c.w.Header()
 }</span>
 
-func (c *compressPWriter) Write(p []byte) (int, error) <span class="cov0" title="0">{
+func (c *compressPWriter) Write(p []byte) (int, error) <span class="cov9" title="1000">{
         // сжимаем данные только для контента с типами application/json и text/html
         ct := c.w.Header().Get("Content-Type")
         supportsCTypes := strings.Contains(ct, "application/json") || strings.Contains(ct, "text/html")
@@ -1374,23 +1374,23 @@ func (c *compressPWriter) Write(p []byte) (int, error) <span class="cov0" title=
                 return c.w.Write(p)
         }</span>
 
-        <span class="cov0" title="0">return c.zw.Write(p)</span>
+        <span class="cov9" title="1000">return c.zw.Write(p)</span>
 }
 
-func (c *compressPWriter) WriteHeader(statusCode int) <span class="cov0" title="0">{
-        if statusCode &lt; 300 </span><span class="cov0" title="0">{
+func (c *compressPWriter) WriteHeader(statusCode int) <span class="cov9" title="1000">{
+        if statusCode &lt; 300 </span><span class="cov9" title="1000">{
                 c.w.Header().Set("Content-Encoding", "gzip")
         }</span>
-        <span class="cov0" title="0">c.w.WriteHeader(statusCode)</span>
+        <span class="cov9" title="1000">c.w.WriteHeader(statusCode)</span>
 }
 
 // Close закрывает gzip.Writer и досылает все данные из буфера.
-func (c *compressPWriter) Close() error <span class="cov0" title="0">{
+func (c *compressPWriter) Close() error <span class="cov9" title="1000">{
         return c.zw.Close()
 }</span>
 
-func (p *gzWriterPool) gzipPoolMiddleware(next http.Handler) http.Handler <span class="cov0" title="0">{
-        gzipFn := func(w http.ResponseWriter, r *http.Request) </span><span class="cov0" title="0">{
+func (p *gzWriterPool) gzipPoolMiddleware(next http.Handler) http.Handler <span class="cov1" title="1">{
+        gzipFn := func(w http.ResponseWriter, r *http.Request) </span><span class="cov9" title="1000">{
                 // по умолчанию устанавливаем оригинальный http.ResponseWriter как тот,
                 // который будем передавать следующей функции
                 ow := w
@@ -1399,7 +1399,7 @@ func (p *gzWriterPool) gzipPoolMiddleware(next http.Handler) http.Handler <span 
                 acceptEncoding := r.Header.Get("Accept-Encoding")
                 supportsGzip := strings.Contains(acceptEncoding, "gzip")
 
-                if supportsGzip </span><span class="cov0" title="0">{
+                if supportsGzip </span><span class="cov9" title="1000">{
                         // оборачиваем оригинальный http.ResponseWriter новым с поддержкой сжатия
                         cw := p.newCompressPWriter(w)
                         // меняем оригинальный http.ResponseWriter на новый
@@ -1411,10 +1411,10 @@ func (p *gzWriterPool) gzipPoolMiddleware(next http.Handler) http.Handler <span 
                 }</span>
 
                 // проверяем, что клиент отправил серверу сжатые данные в формате gzip
-                <span class="cov0" title="0">contentEncoding := r.Header.Get("Content-Encoding")
+                <span class="cov9" title="1000">contentEncoding := r.Header.Get("Content-Encoding")
                 sendsGzip := strings.Contains(contentEncoding, "gzip")
 
-                if sendsGzip </span><span class="cov0" title="0">{
+                if sendsGzip </span><span class="cov9" title="1000">{
                         // оборачиваем тело запроса в io.Reader с поддержкой декомпрессии
                         cr, err := newCompressReader(r.Body)
                         if err != nil </span><span class="cov0" title="0">{
@@ -1422,15 +1422,15 @@ func (p *gzWriterPool) gzipPoolMiddleware(next http.Handler) http.Handler <span 
                                 return
                         }</span>
                         // меняем тело запроса на новое
-                        <span class="cov0" title="0">r.Body = cr
+                        <span class="cov9" title="1000">r.Body = cr
                         defer cr.Close()</span>
                 }
 
                 // передаём управление хендлеру
-                <span class="cov0" title="0">next.ServeHTTP(ow, r)</span>
+                <span class="cov9" title="1000">next.ServeHTTP(ow, r)</span>
 
         }
-        <span class="cov0" title="0">return http.HandlerFunc(gzipFn)</span>
+        <span class="cov1" title="1">return http.HandlerFunc(gzipFn)</span>
 }
 </pre>
 		
@@ -1458,23 +1458,23 @@ type (
         }
 )
 
-func NewHasher(key string, headerName string) *hasher <span class="cov0" title="0">{
+func NewHasher(key string, headerName string) *hasher <span class="cov1" title="1">{
         return &amp;hasher{
                 key:        []byte(key),
                 headerName: headerName,
         }
 }</span>
 
-func (hw *hasherResponseWriter) Write(b []byte) (int, error) <span class="cov0" title="0">{
+func (hw *hasherResponseWriter) Write(b []byte) (int, error) <span class="cov10" title="10">{
         return hw.buf.Write(b)
 }</span>
 
-func (hw *hasherResponseWriter) WriteHeader(statusCode int) <span class="cov0" title="0">{
+func (hw *hasherResponseWriter) WriteHeader(statusCode int) <span class="cov10" title="10">{
         hw.status = statusCode
 }</span>
 
-func (h *hasher) WithHasher(next http.Handler) http.Handler <span class="cov0" title="0">{
-        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span><span class="cov0" title="0">{
+func (h *hasher) WithHasher(next http.Handler) http.Handler <span class="cov10" title="10">{
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span><span class="cov10" title="10">{
                 // read req
                 containHash := r.Header.Get(h.headerName)
                 ow := &amp;hasherResponseWriter{
@@ -1482,7 +1482,7 @@ func (h *hasher) WithHasher(next http.Handler) http.Handler <span class="cov0" t
                         status:         200,
                 }
 
-                if containHash != "" &amp;&amp; len(h.key) &gt; 0 </span><span class="cov0" title="0">{
+                if containHash != "" &amp;&amp; len(h.key) &gt; 0 </span><span class="cov10" title="10">{
                         // get hash from header
                         requestedHash, _ := base64.StdEncoding.DecodeString(r.Header.Get(h.headerName))
 
@@ -1495,7 +1495,7 @@ func (h *hasher) WithHasher(next http.Handler) http.Handler <span class="cov0" t
                                 w.WriteHeader(http.StatusBadRequest)
                                 return
                         }</span>
-                        <span class="cov0" title="0">defer r.Body.Close()
+                        <span class="cov10" title="10">defer r.Body.Close()
 
                         hm.Write(body)
                         calculatedHash := hm.Sum(nil)
@@ -1506,13 +1506,13 @@ func (h *hasher) WithHasher(next http.Handler) http.Handler <span class="cov0" t
                         }</span>
 
                         // set new body, wich will contain same data we read
-                        <span class="cov0" title="0">r.Body = io.NopCloser(bytes.NewBuffer(body))</span>
+                        <span class="cov10" title="10">r.Body = io.NopCloser(bytes.NewBuffer(body))</span>
                 }
 
-                <span class="cov0" title="0">next.ServeHTTP(ow, r)
+                <span class="cov10" title="10">next.ServeHTTP(ow, r)
 
                 // calculate hash
-                if ow.status &lt; 300 &amp;&amp; len(h.key) &gt; 0 </span><span class="cov0" title="0">{
+                if ow.status &lt; 300 &amp;&amp; len(h.key) &gt; 0 </span><span class="cov10" title="10">{
                         hs := hmac.New(sha256.New, h.key)
                         hs.Write(ow.buf.Bytes())
                         sign := hs.Sum(nil)
@@ -1520,7 +1520,7 @@ func (h *hasher) WithHasher(next http.Handler) http.Handler <span class="cov0" t
                         w.Header().Set(h.headerName, calculatedHash)
                 }</span>
 
-                <span class="cov0" title="0">w.WriteHeader(ow.status)
+                <span class="cov10" title="10">w.WriteHeader(ow.status)
                 _, err := w.Write(ow.buf.Bytes())
                 if err != nil </span><span class="cov0" title="0">{
                         w.WriteHeader(http.StatusInternalServerError)
@@ -1555,27 +1555,27 @@ type (
         }
 )
 
-func MidLogger(l service.AppLogger) *midLogger <span class="cov0" title="0">{
+func MidLogger(l service.AppLogger) *midLogger <span class="cov1" title="1">{
         return &amp;midLogger{l}
 }</span>
 
-func (r *loggingResponseWriter) Write(b []byte) (int, error) <span class="cov0" title="0">{
+func (r *loggingResponseWriter) Write(b []byte) (int, error) <span class="cov10" title="10">{
         size, err := r.ResponseWriter.Write(b)
         if err != nil </span><span class="cov0" title="0">{
                 return 0, err
         }</span>
 
-        <span class="cov0" title="0">r.responseData.size += size
+        <span class="cov10" title="10">r.responseData.size += size
         return size, err</span>
 }
 
-func (r *loggingResponseWriter) WriteHeader(statusCode int) <span class="cov0" title="0">{
+func (r *loggingResponseWriter) WriteHeader(statusCode int) <span class="cov10" title="10">{
         r.ResponseWriter.WriteHeader(statusCode)
         r.responseData.status = statusCode
 }</span>
 
-func (l *midLogger) WithLogging(next http.Handler) http.Handler <span class="cov0" title="0">{
-        logFn := func(w http.ResponseWriter, r *http.Request) </span><span class="cov0" title="0">{
+func (l *midLogger) WithLogging(next http.Handler) http.Handler <span class="cov10" title="10">{
+        logFn := func(w http.ResponseWriter, r *http.Request) </span><span class="cov10" title="10">{
                 start := time.Now()
 
                 responseData := &amp;responseData{
@@ -1603,7 +1603,7 @@ func (l *midLogger) WithLogging(next http.Handler) http.Handler <span class="cov
                         zap.Int("size", responseData.size),
                 )
         }</span>
-        <span class="cov0" title="0">return http.HandlerFunc(logFn)</span>
+        <span class="cov10" title="10">return http.HandlerFunc(logFn)</span>
 }
 </pre>
 		
@@ -1743,7 +1743,7 @@ type metricsService struct {
         metricsRepo service.MetricsRepository
 }
 
-func New(mr service.MetricsRepository) *metricsService <span class="cov10" title="6">{
+func New(mr service.MetricsRepository) *metricsService <span class="cov10" title="7">{
         return &amp;metricsService{metricsRepo: mr}
 }</span>
 
@@ -1763,7 +1763,7 @@ func (ss *metricsService) GetAll(ctx context.Context) ([]models.Metric, error) <
         return ss.metricsRepo.GetAll(ctx)
 }</span>
 
-func (ss *metricsService) UpdateList(ctx context.Context, metrics []models.Metric) error <span class="cov0" title="0">{
+func (ss *metricsService) UpdateList(ctx context.Context, metrics []models.Metric) error <span class="cov1" title="1">{
         return ss.metricsRepo.UpdateList(ctx, metrics)
 }</span>
 </pre>
