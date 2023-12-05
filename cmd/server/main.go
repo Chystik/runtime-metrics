@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -11,7 +12,17 @@ import (
 	"github.com/Chystik/runtime-metrics/run"
 )
 
+var (
+	buildVersion string = "N/A"
+	buildDate    string = "N/A"
+	buildCommit  string = "N/A"
+)
+
 func main() {
+	fmt.Println("Build version", "\t", buildVersion)
+	fmt.Println("Build date", "\t", buildDate)
+	fmt.Println("Build commit", "\t", buildCommit)
+
 	cfg := config.NewServerCfg()
 
 	parseFlags(cfg)

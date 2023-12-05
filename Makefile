@@ -78,3 +78,16 @@ dev-up:
 .PHONY: dev-down
 dev-down:
 	docker-compose -f=docker-compose.dev.yml --env-file=.env.dev down --rmi local
+
+
+buildServerVer = v1.0.1
+buildAgentVer = v1.0.1
+buildDate = $(shell date +'%Y/%m/%d %H:%M:%S')
+buildCommit = $(shell git rev-parse HEAD)
+.PHONY: run-server
+run-server:
+	go run -ldflags "-X 'main.buildVersion=$(buildServerVer)' -X 'main.buildDate=$(buildDate)' -X 'main.buildCommit=$(buildCommit)'" ./cmd/server/
+
+.PHONY: run-agent
+run-agent:
+	go run -ldflags "-X 'main.buildVersion=$(buildAgentVer)' -X 'main.buildDate=$(buildDate)' -X 'main.buildCommit=$(buildCommit)'" ./cmd/agent/
