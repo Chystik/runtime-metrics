@@ -7,7 +7,6 @@ import (
 
 	"github.com/Chystik/runtime-metrics/config"
 	"github.com/Chystik/runtime-metrics/internal/models"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -245,4 +244,56 @@ func createValue(x float64) *float64 {
 
 func createDelta(x int64) *int64 {
 	return &x
+}
+
+func Test_memStorage_UpdateList(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		metrics []models.Metric
+	}
+	tests := []struct {
+		name    string
+		ms      *memStorage
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "update",
+			ms:   &memStorage{data: make(map[string]models.Metric)},
+			args: args{
+				ctx: context.Background(),
+				metrics: []models.Metric{
+					{
+						ID:    "testGauge",
+						MType: "gauge",
+						Value: createValue(11.2),
+					},
+					{
+						ID:    "testCounter",
+						MType: "counter",
+						Delta: createDelta(12),
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.ms.UpdateList(tt.args.ctx, tt.args.metrics); (err != nil) != tt.wantErr {
+				t.Errorf("memStorage.UpdateList() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			for _, m := range tt.args.metrics {
+				var val models.Metric
+				var ok bool
+
+				if val, ok = tt.ms.data[m.ID]; !ok {
+					t.Errorf("memStorage.UpdateList() cant find stored metric %v", m.ID)
+				}
+				if val != m {
+					t.Errorf("memStorage.UpdateList() stored metric = %v, want %v", val, m)
+				}
+			}
+		})
+	}
 }
