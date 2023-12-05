@@ -63,9 +63,9 @@
 				
 				<option value="file3">github.com/Chystik/runtime-metrics/internal/adapters/rest_api_handlers/metrics_handlers.go (92.6%)</option>
 				
-				<option value="file4">github.com/Chystik/runtime-metrics/internal/adapters/rest_api_handlers/router.go (0.0%)</option>
+				<option value="file4">github.com/Chystik/runtime-metrics/internal/adapters/rest_api_handlers/router.go (100.0%)</option>
 				
-				<option value="file5">github.com/Chystik/runtime-metrics/internal/infrastructure/repository/inmemory/metrics_repository.go (85.7%)</option>
+				<option value="file5">github.com/Chystik/runtime-metrics/internal/infrastructure/repository/inmemory/metrics_repository.go (100.0%)</option>
 				
 				<option value="file6">github.com/Chystik/runtime-metrics/internal/infrastructure/repository/postgres/metrics_repository.go (0.0%)</option>
 				
@@ -482,7 +482,7 @@ type dbHandlers struct {
         pingTimeout time.Duration
 }
 
-func NewDBHandlers(db service.DBClient, logger service.AppLogger, pingTimeout time.Duration) *dbHandlers <span class="cov10" title="3">{
+func NewDBHandlers(db service.DBClient, logger service.AppLogger, pingTimeout time.Duration) *dbHandlers <span class="cov10" title="4">{
         return &amp;dbHandlers{
                 db:          db,
                 logger:      logger,
@@ -490,7 +490,7 @@ func NewDBHandlers(db service.DBClient, logger service.AppLogger, pingTimeout ti
         }
 }</span>
 
-func (dh *dbHandlers) PingDB(w http.ResponseWriter, r *http.Request) <span class="cov6" title="2">{
+func (dh *dbHandlers) PingDB(w http.ResponseWriter, r *http.Request) <span class="cov5" title="2">{
         ctx, cancel := context.WithTimeout(r.Context(), dh.pingTimeout)
         defer cancel()
 
@@ -546,7 +546,7 @@ type metricsHandlers struct {
         metricsService service.MetricsService
 }
 
-func NewMetricsHandlers(ms service.MetricsService) *metricsHandlers <span class="cov10" title="30">{
+func NewMetricsHandlers(ms service.MetricsService) *metricsHandlers <span class="cov10" title="31">{
         h := &amp;metricsHandlers{metricsService: ms}
         return h
 }</span>
@@ -779,10 +779,10 @@ func (mh *metricsHandlers) AllMetrics(w http.ResponseWriter, r *http.Request) <s
         <span class="cov1" title="1">for i := range m </span><span class="cov7" title="10">{
                 var v string
 
-                if m[i].Value != nil </span><span class="cov4" title="4">{
+                if m[i].Value != nil </span><span class="cov6" title="8">{
                         v = strconv.FormatFloat(*m[i].Value, 'f', -1, 64)
                 }</span>
-                <span class="cov7" title="10">if m[i].Delta != nil </span><span class="cov5" title="6">{
+                <span class="cov7" title="10">if m[i].Delta != nil </span><span class="cov2" title="2">{
                         v = strconv.FormatInt(*m[i].Delta, 10)
                 }</span>
 
@@ -822,7 +822,7 @@ func NewRouter(
         db service.DBClient,
         pingTimeout time.Duration,
         logger service.AppLogger,
-) <span class="cov0" title="0">{
+) <span class="cov8" title="1">{
         // middleware
         router.Use(md.MidLogger(logger).WithLogging)
         router.Use(md.NewHasher(cfg.SHAkey, "HashSHA256").WithHasher)
@@ -832,20 +832,20 @@ func NewRouter(
         // routes
         mh := NewMetricsHandlers(ms)
 
-        router.Route("/update/", func(r chi.Router) </span><span class="cov0" title="0">{
+        router.Route("/update/", func(r chi.Router) </span><span class="cov8" title="1">{
                 r.Post("/", mh.UpdateMetricJSON)
                 r.Post("/*", mh.UpdateMetric)
         }</span>)
-        <span class="cov0" title="0">router.Route("/value/", func(r chi.Router) </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">router.Route("/value/", func(r chi.Router) </span><span class="cov8" title="1">{
                 r.Post("/", mh.GetMetricJSON)
                 r.Post("/*", mh.GetMetric)
         }</span>)
-        <span class="cov0" title="0">router.Get("/value/*", mh.GetMetric)
-        if db != nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">router.Get("/value/*", mh.GetMetric)
+        if db != nil </span><span class="cov8" title="1">{
                 dh := NewDBHandlers(db, logger, pingTimeout)
                 router.Get("/ping", dh.PingDB)
         }</span>
-        <span class="cov0" title="0">router.Get("/", mh.AllMetrics)
+        <span class="cov8" title="1">router.Get("/", mh.AllMetrics)
         router.Post("/updates/", mh.UpdateMetricsJSON)</span>
 }
 </pre>
@@ -930,14 +930,14 @@ func (ms *memStorage) GetAll(ctx context.Context) ([]models.Metric, error) <span
         <span class="cov1" title="1">return metrics, nil</span>
 }
 
-func (ms *memStorage) UpdateList(ctx context.Context, metrics []models.Metric) error <span class="cov0" title="0">{
-        for _, m := range metrics </span><span class="cov0" title="0">{
+func (ms *memStorage) UpdateList(ctx context.Context, metrics []models.Metric) error <span class="cov1" title="1">{
+        for _, m := range metrics </span><span class="cov10" title="2">{
                 ms.Mu.Lock()
                 ms.data[m.ID] = m
                 ms.Mu.Unlock()
         }</span>
 
-        <span class="cov0" title="0">return nil</span>
+        <span class="cov1" title="1">return nil</span>
 }
 </pre>
 		

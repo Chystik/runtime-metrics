@@ -61,7 +61,6 @@ func TestUpdateCounter_WhenRepoReturnsResult(t *testing.T) {
 	expMetric := metric
 	*expMetric.Delta += 1
 
-	mks.repo.On("Get", mock.Anything, mock.Anything).Return(metric, nil)
 	mks.repo.On("UpdateCounter", mock.Anything, mock.Anything).Return(nil)
 
 	err := service.UpdateCounter(context.Background(), expMetric)
@@ -113,6 +112,27 @@ func TestGetAllMetrics(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, expected, actual)
+}
+
+func TestUpdateList_WhenRepoReturnsResult(t *testing.T) {
+	t.Parallel()
+	service, mks := getMetricsServiceMocks()
+
+	metric := []models.Metric{
+		{
+			ID:    "test",
+			Delta: createDelta(1),
+		},
+		{
+			ID:    "test2",
+			Value: createValue(3.2),
+		},
+	}
+
+	mks.repo.EXPECT().UpdateList(mock.Anything, mock.Anything).Return(nil)
+
+	err := service.UpdateList(context.Background(), metric)
+	assert.NoError(t, err)
 }
 
 type metricsServiceMocks struct {
