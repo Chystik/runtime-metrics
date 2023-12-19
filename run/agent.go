@@ -52,7 +52,7 @@ func Agent(ctx context.Context, cfg *config.AgentConfig) {
 	agentClient := agentapiclient.New(client, cfg)
 	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
 
-	p, r := time.Duration(cfg.PollInterval), time.Duration(cfg.ReportInterval)
+	p, r := cfg.PollInterval.Duration, cfg.ReportInterval.Duration
 
 	reportMetrics := retryer.NewConnRetryerFn(
 		3,
@@ -76,8 +76,8 @@ func Agent(ctx context.Context, cfg *config.AgentConfig) {
 	logger.Info(
 		"agent started",
 		zap.String("Address", cfg.Address),
-		zap.Duration("Poll interval", time.Duration(cfg.PollInterval)),
-		zap.Duration("Report interval", time.Duration(cfg.ReportInterval)),
+		zap.Duration("Poll interval", cfg.PollInterval.Duration),
+		zap.Duration("Report interval", cfg.ReportInterval.Duration),
 		zap.Int("Rate limit", cfg.RateLimit),
 	)
 

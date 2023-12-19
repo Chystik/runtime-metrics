@@ -10,25 +10,27 @@ import (
 
 type (
 	ServerConfig struct {
-		Address         string `env:"ADDRESS"`
-		LogLevel        string `env:"LOG_LEVEL"`
-		StoreInterval   `env:"STORE_INTERVAL"`
-		FileStoragePath string `env:"FILE_STORAGE_PATH"`
-		Restore         bool   `env:"RESTORE"`
-		DBDsn           string `env:"DATABASE_DSN"`
-		SHAkey          string `env:"KEY"`
-		CryptoKey       string `env:"CRYPTO_KEY"`
+		Address         string        `env:"ADDRESS" json:"address"`
+		LogLevel        string        `env:"LOG_LEVEL"`
+		StoreInterval   StoreInterval `json:"store_interval"`
+		FileStoragePath string        `env:"FILE_STORAGE_PATH" json:"store_file"`
+		Restore         bool          `env:"RESTORE" json:"restore"`
+		DBDsn           string        `env:"DATABASE_DSN" json:"database_dsn"`
+		SHAkey          string        `env:"KEY"`
+		CryptoKey       string        `env:"CRYPTO_KEY" json:"crypto_key"`
 		ProfileConfig   ProfileConfig
 	}
 
-	StoreInterval time.Duration
+	StoreInterval struct {
+		time.Duration `env:"STORE_INTERVAL"`
+	}
 )
 
 func NewServerCfg() *ServerConfig {
 	cfg := &ServerConfig{
 		Address:         ":8080",
 		LogLevel:        "info",
-		StoreInterval:   StoreInterval(300 * time.Second),
+		StoreInterval:   StoreInterval{Duration: 300 * time.Second},
 		FileStoragePath: "/tmp/metrics-db.json",
 		Restore:         true,
 		ProfileConfig:   ProfileConfig{},
@@ -54,15 +56,22 @@ func (cfg *ServerConfig) Set(s string) error {
 	return nil
 }
 
-func (cfg StoreInterval) String() string {
-	return fmt.Sprintf("%d", cfg)
+func (si StoreInterval) String() string {
+	return fmt.Sprintf("%d", si)
 }
 
-func (cfg *StoreInterval) Set(s string) error {
+func (si *StoreInterval) Set(s string) error {
 	t, err := strconv.Atoi(s)
 	if err != nil {
 		return errors.New("only digits allowed for store intervar")
 	}
-	*cfg = StoreInterval(time.Duration(t) * time.Second)
+	*si = StoreInterval{Duration: time.Duration(t) * time.Second}
 	return nil
+}
+
+func (si *StoreInterval) UnmarshalJSON(b []byte) (err error) {
+	s := strings.Trim(string(b), `"`) // remove quotes
+	t, err := time.ParseDuration(s)
+	si.Duration = t
+	return
 }

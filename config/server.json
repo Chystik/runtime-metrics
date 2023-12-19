@@ -1,0 +1,8 @@
+{
+    "address": ":8080",
+    "restore": true,
+    "store_interval": "1s",
+    "store_file": "data.json",
+    "database_dsn": "postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable",
+    "crypto_key": "./cert/private_key.pem"
+}

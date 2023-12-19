@@ -2,15 +2,25 @@ package main
 
 import (
 	"flag"
+	"os"
 
 	"github.com/Chystik/runtime-metrics/config"
 )
 
-func parseFlags(cfg *config.AgentConfig) {
+const (
+	confFileEnv = "CONFIG"
+)
+
+func parseFlags(cfg *config.AgentConfig) error {
 	// checking interface implementation
 	_ = flag.Value(cfg)
 	_ = flag.Value(&cfg.PollInterval)
 	_ = flag.Value(&cfg.ReportInterval)
+
+	var configFileShort, conigFile string
+
+	flag.StringVar(&configFileShort, "c", "", "path to config file")
+	flag.StringVar(&conigFile, "config", "", "path to config file")
 
 	flag.Var(cfg, "a", "Net address host:port")
 	flag.Var(&cfg.PollInterval, "p", "Poll interval in seconds, min 0.000000001 sec")
@@ -22,4 +32,14 @@ func parseFlags(cfg *config.AgentConfig) {
 	flag.StringVar(&cfg.ProfileConfig.MemFilePath, "mem", "", "pprof Memory out profile")
 
 	flag.Parse()
+
+	if configFileShort != "" {
+		return config.ParseFile(cfg, configFileShort)
+	} else if conigFile != "" {
+		return config.ParseFile(cfg, conigFile)
+	} else if ce := os.Getenv(confFileEnv); ce != "" {
+		return config.ParseFile(cfg, ce)
+	}
+
+	return nil
 }

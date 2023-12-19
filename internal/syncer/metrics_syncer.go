@@ -24,7 +24,7 @@ type syncer struct {
 func New(cfg *config.ServerConfig) *syncer {
 	return &syncer{
 		tick: make(chan struct{}, 1),
-		i:    time.Duration(cfg.StoreInterval),
+		i:    cfg.StoreInterval.Duration,
 	}
 }
 

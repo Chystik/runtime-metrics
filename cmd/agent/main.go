@@ -25,9 +25,12 @@ func main() {
 
 	cfg := config.NewAgentCfg()
 
-	parseFlags(cfg)
+	err := parseFlags(cfg)
+	if err != nil {
+		panic(err)
+	}
 
-	err := parseEnv(cfg)
+	err = parseEnv(cfg)
 	if err != nil {
 		panic(err)
 	}

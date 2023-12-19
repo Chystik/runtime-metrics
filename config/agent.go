@@ -10,18 +10,22 @@ import (
 
 type (
 	AgentConfig struct {
-		Address        string `env:"ADDRESS"`
-		PollInterval   `env:"POLL_INTERVAL"`
-		ReportInterval `env:"REPORT_INTERVAL"`
-		SHAkey         string `env:"KEY"`
-		CryptoKey      string `env:"CRYPTO_KEY"`
-		RateLimit      int    `env:"RATE_LIMIT"`
+		Address        string         `env:"ADDRESS" json:"address"`
+		PollInterval   PollInterval   `json:"poll_interval"`
+		ReportInterval ReportInterval `json:"report_interval"`
+		SHAkey         string         `env:"KEY"`
+		CryptoKey      string         `env:"CRYPTO_KEY" json:"crypto_key"`
+		RateLimit      int            `env:"RATE_LIMIT"`
 		CollectableMetrics
 		ProfileConfig ProfileConfig
 	}
 
-	PollInterval   time.Duration
-	ReportInterval time.Duration
+	PollInterval struct {
+		time.Duration `env:"POLL_INTERVAL" `
+	}
+	ReportInterval struct {
+		time.Duration `env:"REPORT_INTERVAL"`
+	}
 
 	CollectableMetrics []string
 )
@@ -29,8 +33,8 @@ type (
 func NewAgentCfg() *AgentConfig {
 	cfg := &AgentConfig{
 		Address:            ":8080",
-		PollInterval:       PollInterval(2 * time.Second),
-		ReportInterval:     ReportInterval(10 * time.Second),
+		PollInterval:       PollInterval{Duration: 2 * time.Second},
+		ReportInterval:     ReportInterval{Duration: 10 * time.Second},
 		CollectableMetrics: []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc"},
 		ProfileConfig:      ProfileConfig{},
 	}
@@ -64,8 +68,15 @@ func (pi *PollInterval) Set(s string) error {
 	if err != nil {
 		return errors.New("only digits allowed for Poll intervar")
 	}
-	*pi = PollInterval(time.Duration(t * 1e9)) // second
+	*pi = PollInterval{Duration: time.Duration(t * 1e9)} // second
 	return nil
+}
+
+func (pi *PollInterval) UnmarshalJSON(b []byte) (err error) {
+	s := strings.Trim(string(b), `"`) // remove quotes
+	t, err := time.ParseDuration(s)
+	pi.Duration = t
+	return
 }
 
 func (ri ReportInterval) String() string {
@@ -77,6 +88,13 @@ func (ri *ReportInterval) Set(s string) error {
 	if err != nil {
 		return errors.New("only digits allowed for Report intervar")
 	}
-	*ri = ReportInterval(time.Duration(t * 1e9)) // second
+	*ri = ReportInterval{Duration: time.Duration(t * 1e9)} // second
 	return nil
+}
+
+func (ri *ReportInterval) UnmarshalJSON(b []byte) (err error) {
+	s := strings.Trim(string(b), `"`) // remove quotes
+	t, err := time.ParseDuration(s)
+	ri.Duration = t
+	return
 }

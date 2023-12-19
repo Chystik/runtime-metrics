@@ -2,13 +2,23 @@ package main
 
 import (
 	"flag"
+	"os"
 
 	"github.com/Chystik/runtime-metrics/config"
 )
 
-func parseFlags(cfg *config.ServerConfig) {
+const (
+	confFileEnv = "CONFIG"
+)
+
+func parseFlags(cfg *config.ServerConfig) error {
 	// checking interface implementation
 	_ = flag.Value(cfg)
+
+	var configFileShort, conigFile string
+
+	flag.StringVar(&configFileShort, "c", "", "path to config file")
+	flag.StringVar(&conigFile, "config", "", "path to config file")
 
 	flag.StringVar(&cfg.LogLevel, "l", "info", "log levels")
 	flag.StringVar(&cfg.FileStoragePath, "f", "/tmp/metrics-db.json", "file storage path")
@@ -22,4 +32,14 @@ func parseFlags(cfg *config.ServerConfig) {
 	flag.StringVar(&cfg.ProfileConfig.MemFilePath, "mem", "", "pprof Memory out profile")
 
 	flag.Parse()
+
+	if configFileShort != "" {
+		return config.ParseFile(cfg, configFileShort)
+	} else if conigFile != "" {
+		return config.ParseFile(cfg, conigFile)
+	} else if ce := os.Getenv(confFileEnv); ce != "" {
+		return config.ParseFile(cfg, ce)
+	}
+
+	return nil
 }

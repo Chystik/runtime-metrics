@@ -13,6 +13,7 @@ import (
 
 type decryptor struct {
 	privateKey *rsa.PrivateKey
+	buf        bytes.Buffer
 }
 
 func NewDecryptor(privatePemFile string) (*decryptor, error) {
@@ -28,6 +29,7 @@ func NewDecryptor(privatePemFile string) (*decryptor, error) {
 	}
 
 	d := &decryptor{privateKey: privateKey}
+	d.buf.Grow(512)
 
 	return d, nil
 }
@@ -44,7 +46,13 @@ func (d *decryptor) WithDecryptor(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		}
 
-		r.Body = io.NopCloser(bytes.NewBuffer(decryptedBody))
+		_, err = d.buf.Write(decryptedBody)
+		if err != nil {
+			next.ServeHTTP(w, r)
+		}
+		defer d.buf.Reset()
+
+		r.Body = io.NopCloser(&d.buf)
 		r.ContentLength = int64(len(decryptedBody))
 
 		next.ServeHTTP(w, r)

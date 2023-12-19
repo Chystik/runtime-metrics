@@ -26,9 +26,12 @@ func main() {
 
 	cfg := config.NewServerCfg()
 
-	parseFlags(cfg)
+	err := parseFlags(cfg)
+	if err != nil {
+		panic(err)
+	}
 
-	err := parseEnv(cfg)
+	err = parseEnv(cfg)
 	if err != nil {
 		panic(err)
 	}
