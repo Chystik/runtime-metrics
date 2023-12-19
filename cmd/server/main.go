@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/Chystik/runtime-metrics/config"
+	_ "github.com/Chystik/runtime-metrics/pkg/cert"
 	"github.com/Chystik/runtime-metrics/run"
 )
 

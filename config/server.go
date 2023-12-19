@@ -17,6 +17,7 @@ type (
 		Restore         bool   `env:"RESTORE"`
 		DBDsn           string `env:"DATABASE_DSN"`
 		SHAkey          string `env:"KEY"`
+		CryptoKey       string `env:"CRYPTO_KEY"`
 		ProfileConfig   ProfileConfig
 	}
 

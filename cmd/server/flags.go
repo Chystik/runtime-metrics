@@ -15,6 +15,7 @@ func parseFlags(cfg *config.ServerConfig) {
 	flag.BoolVar(&cfg.Restore, "r", true, "restore data from file on startup")
 	flag.StringVar(&cfg.DBDsn, "d", "", "postgres dsn")
 	flag.StringVar(&cfg.SHAkey, "k", "", "sha key")
+	flag.StringVar(&cfg.CryptoKey, "crypto-key", "", "private key (PEM) file path")
 	flag.Var(&cfg.StoreInterval, "i", "interval for saving data to a file, in seconds. 0 value means synchronous data writing")
 	flag.Var(cfg, "a", "Net address host:port")
 	flag.StringVar(&cfg.ProfileConfig.CPUFilePath, "cpu", "", "pprof CPU out profile")

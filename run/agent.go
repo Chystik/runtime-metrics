@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -24,14 +25,32 @@ const (
 )
 
 func Agent(ctx context.Context, cfg *config.AgentConfig) {
-	client := httpclient.NewClient(httpclient.Timeout(defaultHTTPClientTimeout))
-	agentClient := agentapiclient.New(client, cfg)
-	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
-
 	logger, err := logger.Initialize(loggerLevel, "./agent.log")
 	if err != nil {
 		panic(err)
 	}
+
+	var client *httpclient.Client
+	var pemKey []byte
+
+	if cfg.CryptoKey != "" {
+		pemKey, err = os.ReadFile(cfg.CryptoKey)
+		if err != nil {
+			logger.Fatal(err.Error())
+		}
+		client, err = httpclient.NewClient(
+			httpclient.Timeout(defaultHTTPClientTimeout),
+			httpclient.WithEncription(pemKey),
+		)
+	} else {
+		client, err = httpclient.NewClient(httpclient.Timeout(defaultHTTPClientTimeout))
+	}
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+
+	agentClient := agentapiclient.New(client, cfg)
+	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
 
 	p, r := time.Duration(cfg.PollInterval), time.Duration(cfg.ReportInterval)
 

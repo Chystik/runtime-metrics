@@ -31,3 +31,7 @@ data.json
 server.log
 agent.log
 coverage.html
+
+# sensitive information
+*.crt
+*.pem
