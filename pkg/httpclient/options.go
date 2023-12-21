@@ -16,7 +16,7 @@ func Timeout(t time.Duration) Options {
 	}
 }
 
-func WithEncription(publicKeyPEM []byte) Options {
+func WithEncryption(publicKeyPEM []byte) Options {
 	return func(c *Client) error {
 		publicKeyBlock, _ := pem.Decode(publicKeyPEM)
 		publicKey, err := x509.ParsePKIXPublicKey(publicKeyBlock.Bytes)

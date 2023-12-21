@@ -19,9 +19,9 @@ import (
 )
 
 const (
-	defaultHTTPClientTimeout = 20 * time.Second
-	reportMetricsTimeout     = 10 * time.Second
-	loggerLevel              = "info"
+	httpClientTimeout    = 20 * time.Second
+	reportMetricsTimeout = 10 * time.Second
+	loggerLevel          = "info"
 )
 
 func Agent(ctx context.Context, cfg *config.AgentConfig) {
@@ -39,11 +39,11 @@ func Agent(ctx context.Context, cfg *config.AgentConfig) {
 			logger.Fatal(err.Error())
 		}
 		client, err = httpclient.NewClient(
-			httpclient.Timeout(defaultHTTPClientTimeout),
-			httpclient.WithEncription(pemKey),
+			httpclient.Timeout(httpClientTimeout),
+			httpclient.WithEncryption(pemKey),
 		)
 	} else {
-		client, err = httpclient.NewClient(httpclient.Timeout(defaultHTTPClientTimeout))
+		client, err = httpclient.NewClient(httpclient.Timeout(httpClientTimeout))
 	}
 	if err != nil {
 		logger.Fatal(err.Error())
