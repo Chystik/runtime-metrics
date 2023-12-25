@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/Chystik/runtime-metrics/config"
+	_ "github.com/Chystik/runtime-metrics/pkg/cert"
 	"github.com/Chystik/runtime-metrics/run"
 )
 
@@ -25,9 +26,12 @@ func main() {
 
 	cfg := config.NewServerCfg()
 
-	parseFlags(cfg)
+	err := parseFlags(cfg)
+	if err != nil {
+		panic(err)
+	}
 
-	err := parseEnv(cfg)
+	err = parseEnv(cfg)
 	if err != nil {
 		panic(err)
 	}

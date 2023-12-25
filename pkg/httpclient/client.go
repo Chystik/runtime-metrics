@@ -1,6 +1,10 @@
 package httpclient
 
 import (
+	"bytes"
+	"crypto/rand"
+	"crypto/rsa"
+	"io"
 	"net/http"
 	"time"
 )
@@ -9,25 +13,63 @@ const (
 	defaultTimeout = 20 * time.Second
 )
 
-type Client struct {
-	client  *http.Client
-	timeout time.Duration
+var httpClietn *http.Client
+
+type doMethod interface {
+	Do(req *http.Request) (*http.Response, error)
 }
 
-func NewClient(opts ...Options) *Client {
-	httpClietn := &http.Client{
+type Client struct {
+	timeout  time.Duration
+	doMethod doMethod
+}
+
+func NewClient(opts ...Options) (*Client, error) {
+	httpClietn = &http.Client{
 		Timeout: defaultTimeout,
 	}
 
-	client := &Client{client: httpClietn}
+	// by default using Do method without encryption
+	client := &Client{doMethod: &doWithoutEncryption{}}
 
 	for _, opt := range opts {
-		opt(client)
+		err := opt(client)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return client
+	return client, nil
 }
 
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	return c.client.Do(req)
+	return c.doMethod.Do(req)
+}
+
+type doWithEncryption struct {
+	publicKey *rsa.PublicKey
+}
+
+func (c *doWithEncryption) Do(req *http.Request) (*http.Response, error) {
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// encript data with public key
+	encryptedBody, err := rsa.EncryptPKCS1v15(rand.Reader, c.publicKey, body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Body = io.NopCloser(bytes.NewBuffer(encryptedBody))
+	req.ContentLength = int64(len(encryptedBody))
+
+	return httpClietn.Do(req)
+}
+
+type doWithoutEncryption struct{}
+
+func (c *doWithoutEncryption) Do(req *http.Request) (*http.Response, error) {
+	return httpClietn.Do(req)
 }

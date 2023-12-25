@@ -18,9 +18,16 @@ func NewRouter(
 	db service.DBClient,
 	pingTimeout time.Duration,
 	logger service.AppLogger,
-) {
+) error {
 	// middleware
 	router.Use(md.MidLogger(logger).WithLogging)
+	if cfg.CryptoKey != "" {
+		d, err := md.NewDecryptor(cfg.CryptoKey)
+		if err != nil {
+			return err
+		}
+		router.Use(d.WithDecryptor)
+	}
 	router.Use(md.NewHasher(cfg.SHAkey, "HashSHA256").WithHasher)
 	router.Use(md.GzipPoolMiddleware())
 	router.Use(middleware.Recoverer)
@@ -43,4 +50,6 @@ func NewRouter(
 	}
 	router.Get("/", mh.AllMetrics)
 	router.Post("/updates/", mh.UpdateMetricsJSON)
+
+	return nil
 }

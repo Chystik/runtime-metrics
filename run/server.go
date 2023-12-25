@@ -94,7 +94,7 @@ func Server(ctx context.Context, cfg *config.ServerConfig) {
 		}
 		// periodically or permanently writes repo data to a file
 		go func() {
-			logger.Info(fmt.Sprintf(logStorageSyncStart, cfg.FileStoragePath, time.Duration(cfg.StoreInterval)))
+			logger.Info(fmt.Sprintf(logStorageSyncStart, cfg.FileStoragePath, cfg.StoreInterval.Duration))
 			if err := repoWithSyncer.SyncData(); err != nil {
 				logger.Fatal(err.Error())
 			}

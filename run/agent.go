@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -18,22 +19,40 @@ import (
 )
 
 const (
-	defaultHTTPClientTimeout = 20 * time.Second
-	reportMetricsTimeout     = 10 * time.Second
-	loggerLevel              = "info"
+	httpClientTimeout    = 20 * time.Second
+	reportMetricsTimeout = 10 * time.Second
+	loggerLevel          = "info"
 )
 
 func Agent(ctx context.Context, cfg *config.AgentConfig) {
-	client := httpclient.NewClient(httpclient.Timeout(defaultHTTPClientTimeout))
-	agentClient := agentapiclient.New(client, cfg)
-	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
-
 	logger, err := logger.Initialize(loggerLevel, "./agent.log")
 	if err != nil {
 		panic(err)
 	}
 
-	p, r := time.Duration(cfg.PollInterval), time.Duration(cfg.ReportInterval)
+	var client *httpclient.Client
+	var pemKey []byte
+
+	if cfg.CryptoKey != "" {
+		pemKey, err = os.ReadFile(cfg.CryptoKey)
+		if err != nil {
+			logger.Fatal(err.Error())
+		}
+		client, err = httpclient.NewClient(
+			httpclient.Timeout(httpClientTimeout),
+			httpclient.WithEncryption(pemKey),
+		)
+	} else {
+		client, err = httpclient.NewClient(httpclient.Timeout(httpClientTimeout))
+	}
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+
+	agentClient := agentapiclient.New(client, cfg)
+	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
+
+	p, r := cfg.PollInterval.Duration, cfg.ReportInterval.Duration
 
 	reportMetrics := retryer.NewConnRetryerFn(
 		3,
@@ -57,8 +76,8 @@ func Agent(ctx context.Context, cfg *config.AgentConfig) {
 	logger.Info(
 		"agent started",
 		zap.String("Address", cfg.Address),
-		zap.Duration("Poll interval", time.Duration(cfg.PollInterval)),
-		zap.Duration("Report interval", time.Duration(cfg.ReportInterval)),
+		zap.Duration("Poll interval", cfg.PollInterval.Duration),
+		zap.Duration("Report interval", cfg.ReportInterval.Duration),
 		zap.Int("Rate limit", cfg.RateLimit),
 	)
 

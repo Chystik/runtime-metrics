@@ -1,0 +1,6 @@
+{
+    "address": ":8080",
+    "report_interval": "2s",
+    "poll_interval": "1s",
+    "crypto_key": "./cert/public_key.pem"
+}
