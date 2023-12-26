@@ -80,23 +80,11 @@ func init() {
 	})
 
 	// сохраняем сертификат, приватный и публичный ключи
-	certFile, err := os.OpenFile(fmt.Sprintf("%s/%s", exportFolderPath, certFileName), os.O_RDWR|os.O_CREATE, 0644)
-	check(err)
-	_, err = certFile.Write(certBytes)
-	check(err)
-	check(certFile.Close())
+	check(os.MkdirAll(exportFolderPath, 0644))
 
-	pubKeyFile, err := os.OpenFile(fmt.Sprintf("%s/%s", exportFolderPath, publicKeyFileName), os.O_RDWR|os.O_CREATE, 0644)
-	check(err)
-	_, err = pubKeyFile.Write(publicKeyPEM.Bytes())
-	check(err)
-	check(pubKeyFile.Close())
-
-	privKeyFile, err := os.OpenFile(fmt.Sprintf("%s/%s", exportFolderPath, privateKeyFileName), os.O_RDWR|os.O_CREATE, 0644)
-	check(err)
-	_, err = privKeyFile.Write(privateKeyPEM.Bytes())
-	check(err)
-	check(privKeyFile.Close())
+	check(os.WriteFile(fmt.Sprintf("%s/%s", exportFolderPath, certFileName), certBytes, 0644))
+	check(os.WriteFile(fmt.Sprintf("%s/%s", exportFolderPath, publicKeyFileName), publicKeyPEM.Bytes(), 0644))
+	check(os.WriteFile(fmt.Sprintf("%s/%s", exportFolderPath, privateKeyFileName), privateKeyPEM.Bytes(), 0644))
 }
 
 func check(err error) {
