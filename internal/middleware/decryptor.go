@@ -16,8 +16,8 @@ type decryptor struct {
 	buf        bytes.Buffer
 }
 
-func NewDecryptor(privatePemFile string) (*decryptor, error) {
-	privateKeyPEM, err := os.ReadFile(privatePemFile)
+func NewDecryptor(privatePemFilePath string) (*decryptor, error) {
+	privateKeyPEM, err := os.ReadFile(privatePemFilePath)
 	if err != nil {
 		return nil, err
 	}
