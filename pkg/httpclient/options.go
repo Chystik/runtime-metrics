@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"net"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -19,9 +20,14 @@ func Timeout(t time.Duration) Options {
 	}
 }
 
-func WithEncryption(publicKeyPEM []byte) Options {
+func WithEncryption(publicKeyFilePath string) Options {
 	return func(c *client) error {
-		publicKeyBlock, _ := pem.Decode(publicKeyPEM)
+		pemKey, err := os.ReadFile(publicKeyFilePath)
+		if err != nil {
+			return err
+		}
+
+		publicKeyBlock, _ := pem.Decode(pemKey)
 		publicKey, err := x509.ParsePKIXPublicKey(publicKeyBlock.Bytes)
 		if err != nil {
 			return err

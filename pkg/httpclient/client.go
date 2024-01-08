@@ -43,6 +43,17 @@ func NewClient(opts ...Options) (*client, error) {
 	return client, nil
 }
 
+func (c *client) AddOption(opts ...Options) error {
+	for _, opt := range opts {
+		err := opt(c)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (c *client) Do(req *http.Request) (*http.Response, error) {
 	c.req = req
 	return c.doMethod.Do(c.req)

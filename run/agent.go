@@ -3,7 +3,6 @@ package run
 import (
 	"context"
 	"fmt"
-	"os"
 	"sync"
 	"time"
 
@@ -30,27 +29,19 @@ func Agent(ctx context.Context, cfg *config.AgentConfig) {
 		panic(err)
 	}
 
-	var client service.HTTPClient
-	var pemKey []byte
+	client, err := httpclient.NewClient(
+		httpclient.Timeout(httpClientTimeout),
+		httpclient.ExtractOutboundIP("X-Real-IP"),
+	)
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
 
 	if cfg.CryptoKey != "" {
-		pemKey, err = os.ReadFile(cfg.CryptoKey)
+		err = client.AddOption(httpclient.WithEncryption(cfg.CryptoKey))
 		if err != nil {
 			logger.Fatal(err.Error())
 		}
-		client, err = httpclient.NewClient(
-			httpclient.Timeout(httpClientTimeout),
-			httpclient.WithEncryption(pemKey),
-			httpclient.ExtractOutboundIP("X-Real-IP"),
-		)
-	} else {
-		client, err = httpclient.NewClient(
-			httpclient.Timeout(httpClientTimeout),
-			httpclient.ExtractOutboundIP("X-Real-IP"),
-		)
-	}
-	if err != nil {
-		logger.Fatal(err.Error())
 	}
 
 	agentClient := agentapiclient.New(client, cfg)
