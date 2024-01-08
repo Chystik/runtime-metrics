@@ -78,7 +78,7 @@ func Test_ipValidator_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := &mocks.AppLogger{}
+			l := &mocks.Logger{}
 			v, err := NewIPValidator(tt.trustedSubnet, l)
 			if err != nil {
 				t.Error(err)
@@ -102,7 +102,7 @@ func Test_ipValidator_Validate(t *testing.T) {
 func Test_NewIPValidator_WrongSubnet(t *testing.T) {
 	t.Parallel()
 
-	v, err := NewIPValidator("wrong subnet format", &mocks.AppLogger{})
+	v, err := NewIPValidator("wrong subnet format", &mocks.Logger{})
 
 	assert.Nil(t, v)
 	assert.Error(t, err)

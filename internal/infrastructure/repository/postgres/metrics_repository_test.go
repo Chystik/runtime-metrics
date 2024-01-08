@@ -47,7 +47,7 @@ func Test_UpdateGauge(t *testing.T) {
 	defer sqlxDB.Close()
 
 	conRetMock := newConRetryer()
-	logMock := &mocks.AppLogger{}
+	logMock := &mocks.Logger{}
 
 	pgRepo := NewMetricsRepo(sqlxDB, conRetMock, logMock)
 
@@ -79,7 +79,7 @@ func Test_UpdateGauge_WhenRetryerReturnsError(t *testing.T) {
 	defer sqlxDB.Close()
 
 	conRetMock := newConRetryer()
-	logMock := &mocks.AppLogger{}
+	logMock := &mocks.Logger{}
 
 	pgRepo := NewMetricsRepo(sqlxDB, conRetMock, logMock)
 
@@ -102,7 +102,7 @@ func Test_UpdateCounter(t *testing.T) {
 	defer sqlxDB.Close()
 
 	conRetMock := newConRetryer()
-	logMock := &mocks.AppLogger{}
+	logMock := &mocks.Logger{}
 
 	pgRepo := NewMetricsRepo(sqlxDB, conRetMock, logMock)
 
@@ -136,7 +136,7 @@ func Test_UpdateCounter_WhenRetryerReturnsError(t *testing.T) {
 	defer sqlxDB.Close()
 
 	conRetMock := newConRetryer()
-	logMock := &mocks.AppLogger{}
+	logMock := &mocks.Logger{}
 
 	pgRepo := NewMetricsRepo(sqlxDB, conRetMock, logMock)
 
@@ -159,7 +159,7 @@ func Test_Get(t *testing.T) {
 	defer sqlxDB.Close()
 
 	conRetMock := newConRetryer()
-	logMock := &mocks.AppLogger{}
+	logMock := &mocks.Logger{}
 
 	pgRepo := NewMetricsRepo(sqlxDB, conRetMock, logMock)
 
@@ -210,7 +210,7 @@ func Test_Get_WhenRetryerReturnsError(t *testing.T) {
 	defer sqlxDB.Close()
 
 	conRetMock := &mocks.ConnectionRetrier{}
-	logMock := &mocks.AppLogger{}
+	logMock := &mocks.Logger{}
 
 	pgRepo := NewMetricsRepo(sqlxDB, conRetMock, logMock)
 
@@ -229,7 +229,7 @@ func Test_GetAll(t *testing.T) {
 	defer sqlxDB.Close()
 
 	conRetMock := newConRetryer()
-	logMock := &mocks.AppLogger{}
+	logMock := &mocks.Logger{}
 
 	pgRepo := NewMetricsRepo(sqlxDB, conRetMock, logMock)
 
@@ -257,7 +257,7 @@ func Test_GetAll_WhenRetryerReturnsError(t *testing.T) {
 	defer sqlxDB.Close()
 
 	conRetMock := &mocks.ConnectionRetrier{}
-	logMock := &mocks.AppLogger{}
+	logMock := &mocks.Logger{}
 
 	pgRepo := NewMetricsRepo(sqlxDB, conRetMock, logMock)
 
@@ -276,7 +276,7 @@ func Test_UpdateList(t *testing.T) {
 	defer sqlxDB.Close()
 
 	conRetMock := newConRetryer()
-	logMock := &mocks.AppLogger{}
+	logMock := &mocks.Logger{}
 
 	pgRepo := NewMetricsRepo(sqlxDB, conRetMock, logMock)
 
@@ -323,7 +323,7 @@ func Test_UpdateList_WhenBeginReturnsError(t *testing.T) {
 	defer sqlxDB.Close()
 
 	conRetMock := newConRetryer()
-	logMock := &mocks.AppLogger{}
+	logMock := &mocks.Logger{}
 
 	pgRepo := NewMetricsRepo(sqlxDB, conRetMock, logMock)
 	expErr := errors.New("tx begin error")
@@ -349,7 +349,7 @@ func Test_UpdateList_WhenPrepareContextReturnsError(t *testing.T) {
 	defer sqlxDB.Close()
 
 	conRetMock := newConRetryer()
-	logMock := &mocks.AppLogger{}
+	logMock := &mocks.Logger{}
 
 	pgRepo := NewMetricsRepo(sqlxDB, conRetMock, logMock)
 	expErr := errors.New("prepare context error")
@@ -389,7 +389,7 @@ func Test_UpdateList_WhenExecContextReturnsError(t *testing.T) {
 	defer sqlxDB.Close()
 
 	conRetMock := newConRetryer()
-	logMock := &mocks.AppLogger{}
+	logMock := &mocks.Logger{}
 
 	pgRepo := NewMetricsRepo(sqlxDB, conRetMock, logMock)
 	expErr := errors.New("exec context error")
@@ -436,7 +436,7 @@ func Test_UpdateList_WhenCommitReturnsError(t *testing.T) {
 	defer sqlxDB.Close()
 
 	conRetMock := newConRetryer()
-	logMock := &mocks.AppLogger{}
+	logMock := &mocks.Logger{}
 
 	pgRepo := NewMetricsRepo(sqlxDB, conRetMock, logMock)
 	expErr := errors.New("commit error")
@@ -485,7 +485,7 @@ func Test_UpdateList_WhenRollBackReturnsError(t *testing.T) {
 	defer sqlxDB.Close()
 
 	conRetMock := newConRetryer()
-	logMock := &mocks.AppLogger{}
+	logMock := &mocks.Logger{}
 
 	pgRepo := NewMetricsRepo(sqlxDB, conRetMock, logMock)
 	expErr := errors.New("rollback error")

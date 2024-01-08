@@ -33,7 +33,7 @@ func TestNewRouter(t *testing.T) {
 				ms:          &mocks.MetricsService{},
 				db:          &mocks.DBClient{},
 				pingTimeout: time.Second,
-				logger:      &mocks.AppLogger{},
+				logger:      &mocks.Logger{},
 			},
 		},
 	}

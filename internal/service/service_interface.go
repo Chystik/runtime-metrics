@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"net/http"
+
+	"github.com/Chystik/runtime-metrics/pkg/logger"
 )
 
 type DBClient interface {
@@ -12,12 +14,7 @@ type DBClient interface {
 	Ping(ctx context.Context) error
 }
 
-type AppLogger interface {
-	Debug(msg string, fields ...any)
-	Error(msg string, fields ...any)
-	Fatal(msg string, fields ...any)
-	Info(msg string, fields ...any)
-}
+type AppLogger = logger.Logger
 
 type HTTPClient interface {
 	Do(*http.Request) (*http.Response, error)
