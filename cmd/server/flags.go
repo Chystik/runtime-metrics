@@ -28,6 +28,7 @@ func parseFlags(cfg *config.ServerConfig) error {
 	flag.StringVar(&cfg.CryptoKey, "crypto-key", "", "private key (PEM) file path")
 	flag.Var(&cfg.StoreInterval, "i", "interval for saving data to a file, in seconds. 0 value means synchronous data writing")
 	flag.Var(cfg, "a", "Net address host:port")
+	flag.StringVar(&cfg.TrustedSubnet, "t", "", "trusted subnet in CIDR format")
 	flag.StringVar(&cfg.ProfileConfig.CPUFilePath, "cpu", "", "pprof CPU out profile")
 	flag.StringVar(&cfg.ProfileConfig.MemFilePath, "mem", "", "pprof Memory out profile")
 

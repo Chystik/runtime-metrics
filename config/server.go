@@ -18,6 +18,7 @@ type (
 		DBDsn           string        `env:"DATABASE_DSN" json:"database_dsn"`
 		SHAkey          string        `env:"KEY"`
 		CryptoKey       string        `env:"CRYPTO_KEY" json:"crypto_key"`
+		TrustedSubnet   string        `env:"TRUSTED_SUBNET" json:"trusted_subnet"`
 		ProfileConfig   ProfileConfig
 	}
 
