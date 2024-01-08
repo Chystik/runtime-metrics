@@ -7,11 +7,18 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-type Logger struct {
+type logger struct {
 	logger *zap.Logger
 }
 
-func Initialize(level string, outPath ...string) (*Logger, error) {
+type Logger interface {
+	Debug(msg string, fields ...any)
+	Error(msg string, fields ...any)
+	Fatal(msg string, fields ...any)
+	Info(msg string, fields ...any)
+}
+
+func Initialize(level string, outPath ...string) (*logger, error) {
 	lvl, err := zap.ParseAtomicLevel(level)
 	if err != nil {
 		return nil, err
@@ -30,19 +37,19 @@ func Initialize(level string, outPath ...string) (*Logger, error) {
 		return nil, err
 	}
 
-	return &Logger{zl}, nil
+	return &logger{zl}, nil
 }
 
-func (l *Logger) Debug(msg string, fields ...any) {
+func (l *logger) Debug(msg string, fields ...any) {
 	l.logger.Debug(msg, toZapFields(fields...)...)
 }
-func (l *Logger) Error(msg string, fields ...any) {
+func (l *logger) Error(msg string, fields ...any) {
 	l.logger.Error(msg, toZapFields(fields...)...)
 }
-func (l *Logger) Fatal(msg string, fields ...any) {
+func (l *logger) Fatal(msg string, fields ...any) {
 	l.logger.Fatal(msg, toZapFields(fields...)...)
 }
-func (l *Logger) Info(msg string, fields ...any) {
+func (l *logger) Info(msg string, fields ...any) {
 	l.logger.Info(msg, toZapFields(fields...)...)
 }
 

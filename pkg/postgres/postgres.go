@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/Chystik/runtime-metrics/pkg/logger"
-
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -28,11 +27,11 @@ var (
 type Postgres struct {
 	*sqlx.DB
 	connConfig *pgx.ConnConfig
-	logger     *logger.Logger
+	logger     logger.Logger
 }
 
 // New opens a db and perform migrations
-func New(uri string, logger *logger.Logger) (*Postgres, error) {
+func New(uri string, logger logger.Logger) (*Postgres, error) {
 	cc, err := pgx.ParseURI(uri)
 	if err != nil {
 		return nil, err
