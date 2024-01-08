@@ -22,6 +22,7 @@ type doMethod interface {
 type Client struct {
 	timeout  time.Duration
 	doMethod doMethod
+	req      *http.Request
 }
 
 func NewClient(opts ...Options) (*Client, error) {
@@ -43,7 +44,8 @@ func NewClient(opts ...Options) (*Client, error) {
 }
 
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	return c.doMethod.Do(req)
+	c.req = req
+	return c.doMethod.Do(c.req)
 }
 
 type doWithEncryption struct {

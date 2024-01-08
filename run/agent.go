@@ -30,7 +30,7 @@ func Agent(ctx context.Context, cfg *config.AgentConfig) {
 		panic(err)
 	}
 
-	var client *httpclient.Client
+	var client service.HTTPClient
 	var pemKey []byte
 
 	if cfg.CryptoKey != "" {
@@ -41,9 +41,13 @@ func Agent(ctx context.Context, cfg *config.AgentConfig) {
 		client, err = httpclient.NewClient(
 			httpclient.Timeout(httpClientTimeout),
 			httpclient.WithEncryption(pemKey),
+			httpclient.ExtractOutboundIP("X-Real-IP"),
 		)
 	} else {
-		client, err = httpclient.NewClient(httpclient.Timeout(httpClientTimeout))
+		client, err = httpclient.NewClient(
+			httpclient.Timeout(httpClientTimeout),
+			httpclient.ExtractOutboundIP("X-Real-IP"),
+		)
 	}
 	if err != nil {
 		logger.Fatal(err.Error())
