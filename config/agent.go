@@ -8,9 +8,17 @@ import (
 	"time"
 )
 
+const (
+	GRPC TransportType = "grpc"
+	HTTP TransportType = "http"
+)
+
+type TransportType string
+
 type (
 	AgentConfig struct {
 		Address        string         `env:"ADDRESS" json:"address"`
+		TransportType  TransportType  `env:"TRANSPORT_TYPE" json:"transport_type"`
 		PollInterval   PollInterval   `json:"poll_interval"`
 		ReportInterval ReportInterval `json:"report_interval"`
 		SHAkey         string         `env:"KEY"`
@@ -33,6 +41,7 @@ type (
 func NewAgentCfg() *AgentConfig {
 	cfg := &AgentConfig{
 		Address:            ":8080",
+		TransportType:      HTTP,
 		PollInterval:       PollInterval{Duration: 2 * time.Second},
 		ReportInterval:     ReportInterval{Duration: 10 * time.Second},
 		CollectableMetrics: []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc"},

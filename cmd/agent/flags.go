@@ -23,6 +23,7 @@ func parseFlags(cfg *config.AgentConfig) error {
 	flag.StringVar(&conigFile, "config", "", "path to config file")
 
 	flag.Var(cfg, "a", "Net address host:port")
+	flag.StringVar((*string)(&cfg.TransportType), "t", "http", "Transport type: grpc or http")
 	flag.Var(&cfg.PollInterval, "p", "Poll interval in seconds, min 0.000000001 sec")
 	flag.Var(&cfg.ReportInterval, "r", "Report interval in seconds, min 0.000000001 sec")
 	flag.StringVar(&cfg.SHAkey, "k", "", "sha key")

@@ -11,6 +11,7 @@ import (
 type (
 	ServerConfig struct {
 		Address         string        `env:"ADDRESS" json:"address"`
+		AddressGRPC     string        `env:"ADDRESS_GRPC" json:"address_grpc"`
 		LogLevel        string        `env:"LOG_LEVEL"`
 		StoreInterval   StoreInterval `json:"store_interval"`
 		FileStoragePath string        `env:"FILE_STORAGE_PATH" json:"store_file"`
@@ -30,6 +31,7 @@ type (
 func NewServerCfg() *ServerConfig {
 	cfg := &ServerConfig{
 		Address:         ":8080",
+		AddressGRPC:     ":8081",
 		LogLevel:        "info",
 		StoreInterval:   StoreInterval{Duration: 300 * time.Second},
 		FileStoragePath: "/tmp/metrics-db.json",

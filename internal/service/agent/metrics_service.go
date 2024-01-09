@@ -15,12 +15,6 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
-type AgentService interface {
-	UpdateMetrics()
-	UpdateGoPsUtilMetrics()
-	ReportMetrics(context.Context) error
-}
-
 type agentService struct {
 	collectableMetrics config.CollectableMetrics
 	runtimeMetrics     runtime.MemStats
@@ -117,5 +111,5 @@ func (as *agentService) ReportMetrics(ctx context.Context) error {
 	as.mu.RLock()
 	defer as.mu.RUnlock()
 
-	return as.client.ReportMetricsJSONBatch(ctx, as.cache)
+	return as.client.ReportMetricsBatch(ctx, as.cache)
 }

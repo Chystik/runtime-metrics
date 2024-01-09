@@ -1,5 +1,6 @@
 {
     "address": ":8080",
+    "address_grpc": ":8081",
     "restore": true,
     "store_interval": "1s",
     "store_file": "data.json",

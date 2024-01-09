@@ -127,7 +127,7 @@ func (ac *agentAPIClient) ReportMetricsJSON(ctx context.Context, metrics map[str
 
 // ReportMetricsJSONBatch sends all metrics in batch to the metrics server using JSON data format.
 // It also compresses all data sent.
-func (ac *agentAPIClient) ReportMetricsJSONBatch(ctx context.Context, metrics map[string]models.Metric) error {
+func (ac *agentAPIClient) ReportMetricsBatch(ctx context.Context, metrics map[string]models.Metric) error {
 	var ms []models.Metric
 	var buf, reqBody bytes.Buffer
 

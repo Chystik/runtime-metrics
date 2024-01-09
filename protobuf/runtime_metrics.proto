@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package protobuf.pb;
+
+option go_package = "./protobuf;pb";
+
+service MetricsService {
+    rpc UpdateMetrics(UpdateMetricsRequest) returns (UpdateMetricsResponse) {}
+}
+
+message UpdateMetricsRequest {
+    repeated Metric metrics = 1;
+}
+
+message UpdateMetricsResponse {
+    Error error = 1;
+}
+
+message Metric {
+    string id = 1;
+    string type = 2;
+    sint64 delta = 3;
+    double value = 4;
+}
+
+message Error {
+    string message = 1;
+}

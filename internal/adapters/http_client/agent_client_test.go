@@ -228,7 +228,7 @@ func Test_agentAPIClient_ReportMetricsJSONBatch(t *testing.T) {
 			cfg := config.AgentConfig{Address: server.URL[7:]}
 			client := New(server.Client(), &cfg)
 
-			err := client.ReportMetricsJSONBatch(context.Background(), metrics)
+			err := client.ReportMetricsBatch(context.Background(), metrics)
 
 			if tt.wantErr {
 				assert.Error(t, err)

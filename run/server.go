@@ -4,11 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
+	grpcapihandlers "github.com/Chystik/runtime-metrics/internal/adapters/grpc_api_handlers"
 	handlers "github.com/Chystik/runtime-metrics/internal/adapters/rest_api_handlers"
+	"github.com/Chystik/runtime-metrics/internal/interceptors"
+	pb "github.com/Chystik/runtime-metrics/protobuf"
+	"google.golang.org/grpc"
 
 	"github.com/Chystik/runtime-metrics/internal/infrastructure/repository/inmemory"
 	postgresrepo "github.com/Chystik/runtime-metrics/internal/infrastructure/repository/postgres"
@@ -26,9 +31,12 @@ import (
 
 const (
 	logHTTPServerStart             = "HTTP server started on port: %s"
-	logHTTPServerStop              = "Stopped serving new connections"
+	logHTTPServerStop              = "Stopped serving new HTTP connections"
+	logGRPCServerStart             = "gRPC server started on port: %s"
+	logGRPCServerStop              = "Stopped serving new gRPC connections"
 	logSignalInterrupt             = "Interrupt signal. Shutdown"
 	logGracefulHTTPServerShutdown  = "Graceful shutdown of HTTP Server complete."
+	logGracefulGRPCServerShutdown  = "Graceful shutdown of gRPC Server complete."
 	logStorageSyncStart            = "data syncronization to file %s with interval %v started"
 	logStorageSyncStop             = "Stopped saving storage data to a file"
 	logGracefulStorageSyncShutdown = "Graceful shutdown of storage sync complete."
@@ -129,6 +137,29 @@ func Server(ctx context.Context, cfg *config.ServerConfig) {
 		logger.Info(logHTTPServerStop)
 	}()
 
+	// grpc server
+	lis, err := net.Listen("tcp", ":8081")
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+
+	gs := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			interceptors.UnaryServerLogger(logger),
+			interceptors.UnaryServerRecoverer(logger),
+		))
+
+	// register services
+	pb.RegisterMetricsServiceServer(gs, grpcapihandlers.NewMetricsHandlers(metricsService))
+
+	go func() {
+		logger.Info(fmt.Sprintf(logGRPCServerStart, cfg.AddressGRPC))
+		if err = gs.Serve(lis); err != nil {
+			logger.Fatal(err.Error())
+		}
+		logger.Info(logGRPCServerStop)
+	}()
+
 	// interrupt signal
 	<-ctx.Done()
 
@@ -149,6 +180,10 @@ func Server(ctx context.Context, cfg *config.ServerConfig) {
 		logger.Fatal(err.Error())
 	}
 	logger.Info(logGracefulHTTPServerShutdown)
+
+	// Graceful shutdown gRPC Server
+	gs.GracefulStop()
+	logger.Info(logGracefulGRPCServerShutdown)
 
 	// Graceful disconnect db client
 	if cfg.DBDsn != "" {

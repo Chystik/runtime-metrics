@@ -1,5 +1,6 @@
 {
     "address": ":8080",
+    "transport_type": "http",
     "report_interval": "2s",
     "poll_interval": "1s",
     "crypto_key": "./cert/public_key.pem"
