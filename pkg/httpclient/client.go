@@ -19,18 +19,19 @@ type doMethod interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-type Client struct {
+type client struct {
 	timeout  time.Duration
 	doMethod doMethod
+	req      *http.Request
 }
 
-func NewClient(opts ...Options) (*Client, error) {
+func NewClient(opts ...Options) (*client, error) {
 	httpClietn = &http.Client{
 		Timeout: defaultTimeout,
 	}
 
 	// by default using Do method without encryption
-	client := &Client{doMethod: &doWithoutEncryption{}}
+	client := &client{doMethod: &doWithoutEncryption{}}
 
 	for _, opt := range opts {
 		err := opt(client)
@@ -42,8 +43,20 @@ func NewClient(opts ...Options) (*Client, error) {
 	return client, nil
 }
 
-func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	return c.doMethod.Do(req)
+func (c *client) AddOption(opts ...Options) error {
+	for _, opt := range opts {
+		err := opt(c)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *client) Do(req *http.Request) (*http.Response, error) {
+	c.req = req
+	return c.doMethod.Do(c.req)
 }
 
 type doWithEncryption struct {

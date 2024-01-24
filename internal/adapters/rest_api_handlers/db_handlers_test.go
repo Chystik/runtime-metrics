@@ -25,14 +25,14 @@ func TestNewDBHandlers(t *testing.T) {
 
 type dbHandlersMocks struct {
 	db          *mocks.PostgresClient
-	logger      *mocks.AppLogger
+	logger      *mocks.Logger
 	pingTimeout time.Duration
 }
 
 func getDBHandlersMocks() (*dbHandlers, *dbHandlersMocks) {
 	m := &dbHandlersMocks{
 		db:          &mocks.PostgresClient{},
-		logger:      &mocks.AppLogger{},
+		logger:      &mocks.Logger{},
 		pingTimeout: pingTimeOut,
 	}
 	handlers := NewDBHandlers(m.db, m.logger, pingTimeOut)

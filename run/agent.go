@@ -3,11 +3,11 @@ package run
 import (
 	"context"
 	"fmt"
-	"os"
 	"sync"
 	"time"
 
 	"github.com/Chystik/runtime-metrics/config"
+	grpcclient "github.com/Chystik/runtime-metrics/internal/adapters/grpc_client"
 	agentapiclient "github.com/Chystik/runtime-metrics/internal/adapters/http_client"
 	"github.com/Chystik/runtime-metrics/internal/service"
 	agentservice "github.com/Chystik/runtime-metrics/internal/service/agent"
@@ -30,26 +30,37 @@ func Agent(ctx context.Context, cfg *config.AgentConfig) {
 		panic(err)
 	}
 
-	var client *httpclient.Client
-	var pemKey []byte
+	var agentClient service.AgentAPIClient
 
-	if cfg.CryptoKey != "" {
-		pemKey, err = os.ReadFile(cfg.CryptoKey)
+	if cfg.TransportType == config.HTTP {
+		httpClient, err := httpclient.NewClient(
+			httpclient.Timeout(httpClientTimeout),
+			httpclient.ExtractOutboundIP("X-Real-IP"),
+		)
 		if err != nil {
 			logger.Fatal(err.Error())
 		}
-		client, err = httpclient.NewClient(
-			httpclient.Timeout(httpClientTimeout),
-			httpclient.WithEncryption(pemKey),
-		)
+
+		if cfg.CryptoKey != "" {
+			err = httpClient.AddOption(httpclient.WithEncryption(cfg.CryptoKey))
+			if err != nil {
+				logger.Fatal(err.Error())
+			}
+		}
+
+		agentClient = agentapiclient.New(httpClient, cfg)
+	} else if cfg.TransportType == config.GRPC {
+		grpcClient, err := grpcclient.New(cfg.Address)
+		if err != nil {
+			logger.Fatal(err.Error())
+		}
+		defer grpcClient.ConnClose()
+
+		agentClient = grpcClient
 	} else {
-		client, err = httpclient.NewClient(httpclient.Timeout(httpClientTimeout))
-	}
-	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Fatal(fmt.Sprintf("Unknown transport type: %s", cfg.TransportType))
 	}
 
-	agentClient := agentapiclient.New(client, cfg)
 	agentService := agentservice.New(agentClient, cfg.CollectableMetrics)
 
 	p, r := cfg.PollInterval.Duration, cfg.ReportInterval.Duration

@@ -65,6 +65,49 @@ func (_c *AgentAPIClient_ReportMetrics_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
+// ReportMetricsBatch provides a mock function with given fields: ctx, metrics
+func (_m *AgentAPIClient) ReportMetricsBatch(ctx context.Context, metrics map[string]models.Metric) error {
+	ret := _m.Called(ctx, metrics)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, map[string]models.Metric) error); ok {
+		r0 = rf(ctx, metrics)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// AgentAPIClient_ReportMetricsBatch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReportMetricsBatch'
+type AgentAPIClient_ReportMetricsBatch_Call struct {
+	*mock.Call
+}
+
+// ReportMetricsBatch is a helper method to define mock.On call
+//   - ctx context.Context
+//   - metrics map[string]models.Metric
+func (_e *AgentAPIClient_Expecter) ReportMetricsBatch(ctx interface{}, metrics interface{}) *AgentAPIClient_ReportMetricsBatch_Call {
+	return &AgentAPIClient_ReportMetricsBatch_Call{Call: _e.mock.On("ReportMetricsBatch", ctx, metrics)}
+}
+
+func (_c *AgentAPIClient_ReportMetricsBatch_Call) Run(run func(ctx context.Context, metrics map[string]models.Metric)) *AgentAPIClient_ReportMetricsBatch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(map[string]models.Metric))
+	})
+	return _c
+}
+
+func (_c *AgentAPIClient_ReportMetricsBatch_Call) Return(_a0 error) *AgentAPIClient_ReportMetricsBatch_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *AgentAPIClient_ReportMetricsBatch_Call) RunAndReturn(run func(context.Context, map[string]models.Metric) error) *AgentAPIClient_ReportMetricsBatch_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ReportMetricsJSON provides a mock function with given fields: ctx, metrics
 func (_m *AgentAPIClient) ReportMetricsJSON(ctx context.Context, metrics map[string]models.Metric) error {
 	ret := _m.Called(ctx, metrics)
@@ -104,49 +147,6 @@ func (_c *AgentAPIClient_ReportMetricsJSON_Call) Return(_a0 error) *AgentAPIClie
 }
 
 func (_c *AgentAPIClient_ReportMetricsJSON_Call) RunAndReturn(run func(context.Context, map[string]models.Metric) error) *AgentAPIClient_ReportMetricsJSON_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ReportMetricsJSONBatch provides a mock function with given fields: ctx, metrics
-func (_m *AgentAPIClient) ReportMetricsJSONBatch(ctx context.Context, metrics map[string]models.Metric) error {
-	ret := _m.Called(ctx, metrics)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, map[string]models.Metric) error); ok {
-		r0 = rf(ctx, metrics)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// AgentAPIClient_ReportMetricsJSONBatch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReportMetricsJSONBatch'
-type AgentAPIClient_ReportMetricsJSONBatch_Call struct {
-	*mock.Call
-}
-
-// ReportMetricsJSONBatch is a helper method to define mock.On call
-//   - ctx context.Context
-//   - metrics map[string]models.Metric
-func (_e *AgentAPIClient_Expecter) ReportMetricsJSONBatch(ctx interface{}, metrics interface{}) *AgentAPIClient_ReportMetricsJSONBatch_Call {
-	return &AgentAPIClient_ReportMetricsJSONBatch_Call{Call: _e.mock.On("ReportMetricsJSONBatch", ctx, metrics)}
-}
-
-func (_c *AgentAPIClient_ReportMetricsJSONBatch_Call) Run(run func(ctx context.Context, metrics map[string]models.Metric)) *AgentAPIClient_ReportMetricsJSONBatch_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(map[string]models.Metric))
-	})
-	return _c
-}
-
-func (_c *AgentAPIClient_ReportMetricsJSONBatch_Call) Return(_a0 error) *AgentAPIClient_ReportMetricsJSONBatch_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *AgentAPIClient_ReportMetricsJSONBatch_Call) RunAndReturn(run func(context.Context, map[string]models.Metric) error) *AgentAPIClient_ReportMetricsJSONBatch_Call {
 	_c.Call.Return(run)
 	return _c
 }

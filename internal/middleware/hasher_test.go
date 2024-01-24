@@ -18,42 +18,44 @@ const (
 	shaKey        = "secret key"
 )
 
-var nextHasherHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	hashHeader := r.Header.Get(shaHeaderName)
-	containHash := hashHeader != "" && len(hashHeader) > 0
+var nextHasherHandler = func(t *testing.T) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hashHeader := r.Header.Get(shaHeaderName)
+		containHash := hashHeader != "" && len(hashHeader) > 0
 
-	if !containHash {
-		panic("no hash in the header")
-	}
+		if !containHash {
+			t.Error("no hash in the header")
+		}
 
-	var m models.Metric
+		var m models.Metric
 
-	err := json.NewDecoder(r.Body).Decode(&m)
-	if err != nil {
-		panic(err)
-	}
+		err := json.NewDecoder(r.Body).Decode(&m)
+		if err != nil {
+			t.Error(err)
+		}
 
-	var body bytes.Buffer
+		var body bytes.Buffer
 
-	err = json.NewEncoder(&body).Encode(m)
-	if err != nil {
-		panic(err)
-	}
+		err = json.NewEncoder(&body).Encode(m)
+		if err != nil {
+			t.Error(err)
+		}
 
-	w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json")
 
-	w.WriteHeader(http.StatusOK)
-	w.Write(nil)
-})
+		w.WriteHeader(http.StatusOK)
+		w.Write(nil)
+	})
+}
 
-func makeHasherRequest(h http.Handler, b []byte) int {
+func makeHasherRequest(t *testing.T, h http.Handler, b []byte) int {
 	var body bytes.Buffer
 	_, _ = body.Write(b)
 
 	hash := hmac.New(sha256.New, []byte(shaKey))
 	_, err := hash.Write(b)
 	if err != nil {
-		panic(err)
+		t.Error(err)
 	}
 
 	sign := hash.Sum(nil)
@@ -88,13 +90,16 @@ func Test_hasher_WithHasher(t *testing.T) {
 			name: "hasher returns 200",
 			h:    NewHasher(shaKey, shaHeaderName),
 			args: args{
-				handlerToTest: nextHasherHandler,
+				handlerToTest: nextHasherHandler(t),
 				testData:      generateMetrics(10),
 			},
 			wantStatus: http.StatusOK,
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
+		t.Parallel()
+
 		t.Run(tt.name, func(t *testing.T) {
 			for _, d := range tt.args.testData {
 				var buf bytes.Buffer
@@ -102,7 +107,7 @@ func Test_hasher_WithHasher(t *testing.T) {
 					t.Errorf(err.Error())
 				}
 
-				if got := makeHasherRequest(tt.h.WithHasher(tt.args.handlerToTest), buf.Bytes()); got != tt.wantStatus {
+				if got := makeHasherRequest(t, tt.h.WithHasher(tt.args.handlerToTest), buf.Bytes()); got != tt.wantStatus {
 					t.Errorf("hasher.WithHasher() = %v, want %v", got, tt.wantStatus)
 				}
 			}

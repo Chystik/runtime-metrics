@@ -11,6 +11,7 @@ import (
 type (
 	ServerConfig struct {
 		Address         string        `env:"ADDRESS" json:"address"`
+		AddressGRPC     string        `env:"ADDRESS_GRPC" json:"address_grpc"`
 		LogLevel        string        `env:"LOG_LEVEL"`
 		StoreInterval   StoreInterval `json:"store_interval"`
 		FileStoragePath string        `env:"FILE_STORAGE_PATH" json:"store_file"`
@@ -18,6 +19,7 @@ type (
 		DBDsn           string        `env:"DATABASE_DSN" json:"database_dsn"`
 		SHAkey          string        `env:"KEY"`
 		CryptoKey       string        `env:"CRYPTO_KEY" json:"crypto_key"`
+		TrustedSubnet   string        `env:"TRUSTED_SUBNET" json:"trusted_subnet"`
 		ProfileConfig   ProfileConfig
 	}
 
@@ -29,6 +31,7 @@ type (
 func NewServerCfg() *ServerConfig {
 	cfg := &ServerConfig{
 		Address:         ":8080",
+		AddressGRPC:     ":8081",
 		LogLevel:        "info",
 		StoreInterval:   StoreInterval{Duration: 300 * time.Second},
 		FileStoragePath: "/tmp/metrics-db.json",

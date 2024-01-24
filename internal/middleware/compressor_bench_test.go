@@ -18,6 +18,18 @@ import (
 	"github.com/Chystik/runtime-metrics/internal/models"
 )
 
+/*
+goos: windows
+goarch: amd64
+pkg: github.com/Chystik/runtime-metrics/internal/middleware
+cpu: Intel(R) Core(TM) i5-10300H CPU @ 2.50GHz
+BenchmarkWriters-8              	     429	   2882737 ns/op	   816320 B/op	      17 allocs/op
+BenchmarkPoolWriters-8          	     422	   2592022 ns/op	     4415 B/op	       0 allocs/op
+BenchmarkCompressor/Normal-8    	      13	 102234677 ns/op	457133233 B/op	   42296 allocs/op
+BenchmarkCompressor/Pool-8      	      38	  30838611 ns/op	 62529156 B/op	   32636 allocs/op
+BenchmarkCompressorParallel/Normal-8      30	  41232880 ns/op	456668210 B/op	   41498 allocs/op
+BenchmarkCompressorParallel/Pool-8        62	  16883881 ns/op	113411487 B/op	   34112 allocs/op
+*/
 const (
 	metricsCount = 500
 )

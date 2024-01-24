@@ -91,3 +91,9 @@ run-server:
 .PHONY: run-agent
 run-agent:
 	go run -ldflags "-X 'main.buildVersion=$(buildAgentVer)' -X 'main.buildDate=$(buildDate)' -X 'main.buildCommit=$(buildCommit)'" ./cmd/agent/
+
+.PHONY: proto
+proto:
+	protoc --go_out=. --go_opt=paths=source_relative \
+    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+    ./protobuf/runtime_metrics.proto

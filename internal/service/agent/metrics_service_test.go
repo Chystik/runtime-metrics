@@ -49,7 +49,7 @@ func Test_agentService_UpdateMetrics(t *testing.T) {
 func TestReportMetrics_WhenClientRetunNoError(t *testing.T) {
 	c, mks := getAgentServiceMocks()
 
-	mks.client.On("ReportMetricsJSONBatch", mock.Anything, mock.Anything).Return(nil)
+	mks.client.On("ReportMetricsBatch", mock.Anything, mock.Anything).Return(nil)
 	err := c.ReportMetrics(context.Background())
 
 	assert.NoError(t, err)
@@ -59,7 +59,7 @@ type agentServiceMocks struct {
 	client *mocks.AgentAPIClient
 }
 
-func getAgentServiceMocks() (AgentService, *agentServiceMocks) {
+func getAgentServiceMocks() (service.AgentService, *agentServiceMocks) {
 	mks := &agentServiceMocks{
 		client: &mocks.AgentAPIClient{},
 	}

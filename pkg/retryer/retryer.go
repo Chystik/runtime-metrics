@@ -14,25 +14,25 @@ var (
 	logRetryConnection = "cannot connect to the server. next try in %v seconds"
 )
 
-type Retryer struct {
+type retryer struct {
 	attempts        int
 	triesStartAfter time.Duration
 	triesGrowsDelta time.Duration
-	log             *logger.Logger
+	log             logger.Logger
 }
 
-type RetryerFn struct {
+type retryerFn struct {
 	attempts        int
 	triesStartAfter time.Duration
 	triesGrowsDelta time.Duration
-	log             *logger.Logger
+	log             logger.Logger
 	fn              func() error
 }
 
 // ConnRetryer retries function call if function returns connection refused error
 // retry time grows as: triesStartAfter = triesStartAfter + triesGrowsDelta
-func NewConnRetryer(attempts int, triesStartAfter, triesGrowsDelta time.Duration, logger *logger.Logger) *Retryer {
-	return &Retryer{
+func NewConnRetryer(attempts int, triesStartAfter, triesGrowsDelta time.Duration, logger logger.Logger) *retryer {
+	return &retryer{
 		attempts:        attempts,
 		triesStartAfter: triesStartAfter,
 		triesGrowsDelta: triesGrowsDelta,
@@ -42,8 +42,8 @@ func NewConnRetryer(attempts int, triesStartAfter, triesGrowsDelta time.Duration
 
 // ConnRetryerFn retries function call if function returns connection refused error
 // retry time grows as: triesStartAfter = triesStartAfter + triesGrowsDelta
-func NewConnRetryerFn(attempts int, triesStartAfter, triesGrowsDelta time.Duration, logger *logger.Logger, fn func() error) *RetryerFn {
-	return &RetryerFn{
+func NewConnRetryerFn(attempts int, triesStartAfter, triesGrowsDelta time.Duration, logger logger.Logger, fn func() error) *retryerFn {
+	return &retryerFn{
 		attempts:        attempts,
 		triesStartAfter: triesStartAfter,
 		triesGrowsDelta: triesGrowsDelta,
@@ -52,7 +52,7 @@ func NewConnRetryerFn(attempts int, triesStartAfter, triesGrowsDelta time.Durati
 	}
 }
 
-func (r *Retryer) DoWithRetry(retryableFunc func() error) error {
+func (r *retryer) DoWithRetry(retryableFunc func() error) error {
 	err := retryableFunc()
 	if err != nil {
 		var netOpErr *net.OpError
@@ -71,7 +71,7 @@ func (r *Retryer) DoWithRetry(retryableFunc func() error) error {
 	return err
 }
 
-func (r *RetryerFn) DoWithRetryFn() error {
+func (r *retryerFn) DoWithRetryFn() error {
 	err := r.fn()
 	if err != nil {
 		var netOpErr *net.OpError

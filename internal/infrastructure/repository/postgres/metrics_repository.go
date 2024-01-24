@@ -129,7 +129,7 @@ func (pg *pgRepo) UpdateList(ctx context.Context, metrics []models.Metric) (err 
 	}
 	defer func() {
 		e := tx.Rollback()
-		if e.Error() != "sql: transaction has already been committed or rolled back" {
+		if e != nil && e.Error() != "sql: transaction has already been committed or rolled back" {
 			err = e
 		}
 	}()

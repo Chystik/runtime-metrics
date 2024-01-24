@@ -1,8 +1,10 @@
 {
     "address": ":8080",
+    "address_grpc": ":8081",
     "restore": true,
     "store_interval": "1s",
     "store_file": "data.json",
     "database_dsn": "postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable",
-    "crypto_key": "./cert/private_key.pem"
+    "crypto_key": "./cert/private_key.pem",
+    "trusted_subnet": "127.0.0.0/16"
 }

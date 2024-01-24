@@ -28,6 +28,13 @@ func NewRouter(
 		}
 		router.Use(d.WithDecryptor)
 	}
+	if cfg.TrustedSubnet != "" {
+		ip, err := md.NewIPValidator(cfg.TrustedSubnet, logger)
+		if err != nil {
+			return err
+		}
+		router.Use(ip.Validate)
+	}
 	router.Use(md.NewHasher(cfg.SHAkey, "HashSHA256").WithHasher)
 	router.Use(md.GzipPoolMiddleware())
 	router.Use(middleware.Recoverer)
