@@ -1,11 +1,14 @@
 syntax = "proto3";
 
-package protobuf.pb;
+package pb;
 
-option go_package = "./protobuf;pb";
+option go_package = "github.com/Chystik/runtime-metrics/protobuf/pb";
 
 service MetricsService {
     rpc UpdateMetrics(UpdateMetricsRequest) returns (UpdateMetricsResponse) {}
+    rpc UpdateMetric(UpdateMetricRequest) returns (UpdateMetricResponse) {}
+    rpc GetMetric(GetMetricRequest) returns (GetMetricResponse) {}
+    rpc PingDB(PingDBRequest) returns (PingDBResponse) {}
 }
 
 message UpdateMetricsRequest {
@@ -13,6 +16,30 @@ message UpdateMetricsRequest {
 }
 
 message UpdateMetricsResponse {
+    Error error = 1;
+}
+
+message UpdateMetricRequest {
+    Metric metric = 1;
+}
+
+message UpdateMetricResponse {
+    Error error = 1;
+}
+
+message GetMetricRequest {
+    Metric metric = 1;
+}
+
+message GetMetricResponse {
+    Metric metric = 1;
+    Error error = 2;
+}
+
+message PingDBRequest {
+}
+
+message PingDBResponse {
     Error error = 1;
 }
 

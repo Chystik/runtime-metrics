@@ -1,7 +1,7 @@
 {
-    "address": ":8080",
-    "transport_type": "http",
-    "report_interval": "2s",
+    "address": ":8081",
+    "transport_type": "grpc",
+    "report_interval": "0.002s",
     "poll_interval": "1s",
     "crypto_key": "./cert/public_key.pem"
 }

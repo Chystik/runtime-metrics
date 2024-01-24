@@ -23,3 +23,12 @@ func toDomainMetric(m *pb.Metric) models.Metric {
 		Value: &m.Value,
 	}
 }
+
+func fromDomainMetric(m models.Metric) *pb.Metric {
+	return &pb.Metric{
+		Id:    m.ID,
+		Type:  m.MType,
+		Delta: *m.Delta,
+		Value: *m.Value,
+	}
+}
